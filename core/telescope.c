@@ -1,4 +1,6 @@
+#define _POSIX_C_SOURCE 200809L
 #include "telescope.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -10,7 +12,7 @@
 #include <sys/stat.h>
 
 /* Forward declaration for metrics */
-extern int metrics_collector_init(const struct telescope_observability_t *obs_config);
+extern int metrics_collector_init(const telescope_observability_t *obs_config);
 extern void metrics_collector_cleanup(void);
 extern const struct telescope_metrics *metrics_collector_get(void);
 

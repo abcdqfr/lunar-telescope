@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include "compositor.h"
 #include "../input/input.h"
 #include <stdlib.h>

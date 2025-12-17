@@ -1,0 +1,182 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://lunar-telescope.org/schemas/waypipe-schema.json",
+  "title": "Waypipe Connection Configuration Schema",
+  "description": "Schema for validating Waypipe connection and performance configuration",
+  "type": "object",
+  "required": ["connection", "application"],
+  "properties": {
+    "connection": {
+      "type": "object",
+      "required": ["remote_host", "remote_port"],
+      "properties": {
+        "remote_host": {
+          "type": "string",
+          "description": "Remote hostname or IP address",
+          "pattern": "^([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}$|^([0-9]{1,3}\\.){3}[0-9]{1,3}$|^localhost$"
+        },
+        "remote_port": {
+          "type": "integer",
+          "description": "Remote port number",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 22
+        },
+        "ssh_user": {
+          "type": "string",
+          "description": "SSH username for remote connection",
+          "default": "root"
+        },
+        "ssh_key_path": {
+          "type": "string",
+          "description": "Path to SSH private key",
+          "pattern": "^/"
+        },
+        "compression": {
+          "type": "string",
+          "enum": ["none", "lz4", "zstd"],
+          "description": "Compression algorithm",
+          "default": "lz4"
+        },
+        "video_codec": {
+          "type": "string",
+          "enum": ["h264", "h265", "vp8", "vp9", "av1"],
+          "description": "Video codec for hardware encoding",
+          "default": "h264"
+        },
+        "bandwidth_limit": {
+          "type": "integer",
+          "description": "Bandwidth limit in Mbps (0 = unlimited)",
+          "minimum": 0,
+          "default": 0
+        }
+      }
+    },
+    "application": {
+      "type": "object",
+      "required": ["executable", "args"],
+      "properties": {
+        "executable": {
+          "type": "string",
+          "description": "Path to application executable",
+          "pattern": "^/"
+        },
+        "args": {
+          "type": "array",
+          "description": "Command-line arguments",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "env": {
+          "type": "object",
+          "description": "Environment variables",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "working_directory": {
+          "type": "string",
+          "description": "Working directory for application",
+          "pattern": "^/"
+        }
+      }
+    },
+    "performance": {
+      "type": "object",
+      "description": "Performance tuning parameters",
+      "properties": {
+        "profile": {
+          "type": "string",
+          "enum": ["low-latency", "balanced", "high-quality", "bandwidth-constrained"],
+          "description": "Performance profile preset",
+          "default": "balanced"
+        },
+        "target_latency_ms": {
+          "type": "integer",
+          "description": "Target end-to-end latency in milliseconds",
+          "minimum": 1,
+          "maximum": 1000,
+          "default": 50
+        },
+        "frame_rate": {
+          "type": "integer",
+          "description": "Target frame rate (0 = adaptive)",
+          "minimum": 0,
+          "maximum": 240,
+          "default": 60
+        },
+        "enable_prediction": {
+          "type": "boolean",
+          "description": "Enable predictive input",
+          "default": true
+        },
+        "prediction_window_ms": {
+          "type": "integer",
+          "description": "Input prediction window in milliseconds",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 16
+        },
+        "enable_scroll_smoothing": {
+          "type": "boolean",
+          "description": "Enable scroll smoothing",
+          "default": true
+        }
+      }
+    },
+    "observability": {
+      "type": "object",
+      "description": "Metrics and observability configuration",
+      "properties": {
+        "enable_metrics": {
+          "type": "boolean",
+          "description": "Enable metric collection",
+          "default": true
+        },
+        "metrics_interval_ms": {
+          "type": "integer",
+          "description": "Metrics collection interval in milliseconds",
+          "minimum": 100,
+          "maximum": 10000,
+          "default": 1000
+        },
+        "metrics_file": {
+          "type": "string",
+          "description": "Path to metrics output file (JSON)",
+          "pattern": "^/"
+        },
+        "log_level": {
+          "type": "string",
+          "enum": ["error", "warn", "info", "debug", "trace"],
+          "description": "Logging verbosity level",
+          "default": "info"
+        }
+      }
+    },
+    "lens": {
+      "type": "object",
+      "description": "Transport lens selection",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["waypipe", "sunshine", "moonlight", "auto"],
+          "description": "Transport type (auto = select based on app behavior)",
+          "default": "auto"
+        },
+        "fallback": {
+          "type": "array",
+          "description": "Fallback transport types in order of preference",
+          "items": {
+            "type": "string",
+            "enum": ["waypipe", "sunshine", "moonlight"]
+          },
+          "default": ["waypipe", "sunshine", "moonlight"]
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
+

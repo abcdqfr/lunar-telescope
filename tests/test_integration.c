@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -123,14 +124,14 @@ void test_compositor_hooks(void) {
 void test_metrics_collection(void) {
     printf("Testing metrics collection...\n");
     
-    struct telescope_observability_t obs_config = {
+    telescope_observability_t obs_config = {
         .enable_metrics = true,
         .metrics_interval_ms = 1000,
         .metrics_file = NULL,
         .log_level = 2
     };
     
-    extern int metrics_collector_init(const struct telescope_observability_t *);
+    extern int metrics_collector_init(const telescope_observability_t *);
     extern void metrics_record_frame(uint32_t, bool);
     extern void metrics_record_input_event(bool, bool);
     extern void metrics_record_bandwidth(uint64_t, uint64_t);

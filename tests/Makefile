@@ -18,7 +18,7 @@ TESTS = test_schema test_input test_integration
 
 all: $(TESTS)
 
-test_schema: ./test_schema.c $(CORE_DIR)/schema.c $(CORE_DIR)/profiles.c $(CORE_DIR)/telescope.c $(CORE_DIR)/logging.c $(CORE_DIR)/utils.c
+test_schema: ./test_schema.c $(CORE_DIR)/schema.c $(CORE_DIR)/profiles.c $(CORE_DIR)/telescope.c $(CORE_DIR)/metrics.c $(CORE_DIR)/logging.c $(CORE_DIR)/utils.c
 	$(CC) $(CFLAGS) $(INCLUDES) $(JSON_C_CFLAGS) -o $@ $^ $(LDFLAGS) $(JSON_C_LDFLAGS)
 
 test_input: ./test_input.c $(INPUT_DIR)/input_proxy.c $(INPUT_DIR)/scroll_smoother.c $(INPUT_DIR)/rust_predictor_stub.c $(CORE_DIR)/logging.c $(CORE_DIR)/utils.c

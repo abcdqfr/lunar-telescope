@@ -1,0 +1,59 @@
+# Build artifacts
+build/
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+
+# Rust build artifacts
+target/
+Cargo.lock
+**/*.rs.bk
+
+# Compiled binaries
+telescope
+waypipe-connect-smart
+test_*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Test artifacts
+*.gcov
+*.gcda
+*.gcno
+coverage/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.orig
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+
+# Local configuration (may contain secrets)
+config.local.json
+*.local.json
+

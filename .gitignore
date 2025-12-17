@@ -14,7 +14,8 @@ Cargo.lock
 # Compiled binaries
 telescope
 waypipe-connect-smart
-test_*
+tests/test_*
+tests/*.pyc
 
 # IDE files
 .vscode/

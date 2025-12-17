@@ -88,6 +88,20 @@ jobs:
         sudo apt-get install -y cppcheck || echo "cppcheck not available"
         # Would run: cppcheck --enable=all --error-exitcode=1 . || true
 
+  gitleaks:
+    name: Secret Scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Full history for gitleaks
+    
+    - name: Run Gitleaks
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   documentation:
     name: Documentation Check
     runs-on: ubuntu-latest

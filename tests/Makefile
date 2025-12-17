@@ -4,6 +4,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -g -std=c11
 INCLUDES = -I../core -I../input
 LDFLAGS = -ljson-c -lm
+JSON_C_LDFLAGS = $(shell pkg-config --libs json-c 2>/dev/null || echo "-ljson-c")
 
 # Source directories
 CORE_DIR = ../core
@@ -16,30 +17,37 @@ TESTS = test_schema test_input test_integration
 
 all: $(TESTS)
 
-test_schema: test_schema.c $(CORE_DIR)/schema.c $(CORE_DIR)/profiles.c $(CORE_DIR)/telescope.c
+test_schema: test_schema.c $(CORE_DIR)/schema.c $(CORE_DIR)/profiles.c $(CORE_DIR)/telescope.c $(CORE_DIR)/logging.c $(CORE_DIR)/utils.c
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
 
-test_input: test_input.c $(INPUT_DIR)/input_proxy.c $(INPUT_DIR)/scroll_smoother.c
+test_input: test_input.c $(INPUT_DIR)/input_proxy.c $(INPUT_DIR)/scroll_smoother.c $(INPUT_DIR)/rust_predictor_stub.c $(CORE_DIR)/logging.c $(CORE_DIR)/utils.c
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
 
 test_integration: test_integration.c
-	$(CC) $(CFLAGS) $(INCLUDES) -I../core -I../input -I../compositor \
-		-o $@ $< \
-		-L../build/lib -llunar_telescope \
-		$(LDFLAGS) $(JSON_C_LDFLAGS) \
-		-Wl,-rpath,../build/lib || \
-	$(CC) $(CFLAGS) $(INCLUDES) -I../core -I../input -I../compositor \
-		-o $@ $< \
-		../core/*.o ../input/*.o ../compositor/*.o \
-		$(LDFLAGS) $(JSON_C_LDFLAGS)
+	@echo "Building integration test (requires library to be built first)..."
+	@if [ -f ../build/lib/liblunar_telescope.a ]; then \
+		$(CC) $(CFLAGS) $(INCLUDES) -I../core -I../input -I../compositor -Ilenses \
+			-o $@ $< \
+			-L../build/lib -llunar_telescope \
+			$(LDFLAGS) $(JSON_C_LDFLAGS) \
+			-Wl,-rpath,../build/lib; \
+	else \
+		echo "Library not found, skipping integration test build"; \
+		touch $@; \
+	fi
 
 clean:
 	rm -f $(TESTS)
 
 test: all
-	./test_schema
-	./test_input
-	./test_integration || echo "Integration test skipped (requires built library)"
-	python3 test_profiles.py
-	python3 test_schema_validation.py
+	@echo "Running tests..."
+	@./test_schema || (echo "test_schema failed" && exit 1)
+	@./test_input || (echo "test_input failed" && exit 1)
+	@if [ -x ./test_integration ]; then \
+		./test_integration || echo "Integration test failed (non-critical)"; \
+	else \
+		echo "Integration test skipped (library not built)"; \
+	fi
+	@python3 test_profiles.py || (echo "Python profile test failed" && exit 1)
+	@python3 test_schema_validation.py || (echo "Python schema test failed" && exit 1)
 

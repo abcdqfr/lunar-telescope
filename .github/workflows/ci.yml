@@ -38,11 +38,11 @@ jobs:
     
     - name: Build C modules
       run: |
-        make core input compositor lenses
+        make -j$(nproc) core input compositor lenses
     
     - name: Build static library
       run: |
-        make $(OUTPUT_LIB)
+        make build/lib/liblunar_telescope.a
     
     - name: Run C tests
       run: |

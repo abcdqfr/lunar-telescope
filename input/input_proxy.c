@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include "input.h"
 #include "rust_predictor.h"
 #include <stdlib.h>

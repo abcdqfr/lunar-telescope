@@ -42,7 +42,7 @@ struct metrics_collector {
 
 static struct metrics_collector *g_collector = NULL;
 
-int metrics_collector_init(const struct telescope_observability_t *obs_config) {
+int metrics_collector_init(const telescope_observability_t *obs_config) {
     if (!obs_config || !obs_config->enable_metrics) {
         return 0;  /* Metrics disabled */
     }

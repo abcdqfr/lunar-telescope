@@ -123,7 +123,7 @@ $(OBJ_DIR)/utils.o: $(CORE_DIR)/utils.c $(CORE_DIR)/utils.h | $(OBJ_DIR)
 input: $(INPUT_OBJS)
 
 $(OBJ_DIR)/input_proxy.o: $(INPUT_DIR)/input_proxy.c $(INPUT_DIR)/input.h | $(OBJ_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 $(OBJ_DIR)/scroll_smoother.o: $(INPUT_DIR)/scroll_smoother.c $(INPUT_DIR)/input.h | $(OBJ_DIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<

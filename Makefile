@@ -7,7 +7,7 @@
 # - Lens adapters
 # - Tests
 
-.PHONY: all clean install uninstall test help core input compositor lenses check-deps check-deps-jsonc check-runtime doctor hooks-install hooks-uninstall preflight preflight-ci preflight-baseline preflight-rust preflight-format coverage coverage-report preflight-strict preflight-sanitize preflight-tidy pr pr-create pr-open pr-status
+.PHONY: all clean install uninstall test help core input compositor lenses check-deps check-deps-jsonc check-runtime doctor hooks-install hooks-uninstall preflight preflight-ci preflight-baseline preflight-rust preflight-format coverage coverage-report preflight-strict preflight-sanitize preflight-tsan preflight-tidy pr pr-create pr-open pr-status
 .DEFAULT_GOAL := all
 
 # Configuration
@@ -142,6 +142,7 @@ help:
 	@echo "  preflight-baseline - Baseline build+tests (WITH_RUST=0 WITH_JSONC=0)"
 	@echo "  preflight-strict - Stricter-than-CI local checks (includes C coverage)"
 	@echo "  preflight-sanitize - C sanitizers (ASan+UBSan) build+tests (clang)"
+	@echo "  preflight-tsan - C ThreadSanitizer build+tests (clang; slower)"
 	@echo "  preflight-tidy - clang-tidy (changed C files vs base ref)"
 	@echo "  coverage     - Generate C coverage report (gcovr) and enforce minimum threshold"
 	@echo "  core         - Build core C modules"
@@ -246,6 +247,20 @@ preflight-sanitize:
 	@$(MAKE) -j$$(nproc) CC=clang WITH_RUST=0 WITH_JSONC=1 SANITIZE=1 WERROR=1 all >/dev/null
 	@$(MAKE) -C tests test CC=clang WITH_JSONC=1 WITH_PYTHON=0 SANITIZE=1 WERROR=1 >/dev/null
 	@echo "OK: sanitizers"
+
+# ThreadSanitizer (C): slower; best suited for nightly or dedicated CI lanes.
+preflight-tsan:
+	@echo "== preflight-tsan: TSan (C) =="
+	@if ! command -v clang >/dev/null 2>&1; then \
+		echo "Error: clang not found (required for TSan). Use nix develop or install clang."; \
+		exit 1; \
+	fi
+	@$(MAKE) clean >/dev/null
+	@TSAN_OPTIONS="halt_on_error=1" \
+		$(MAKE) -j$$(nproc) CC=clang WITH_RUST=0 WITH_JSONC=1 SANITIZE=1 SANITIZE_KIND=thread WERROR=1 all >/dev/null
+	@TSAN_OPTIONS="halt_on_error=1" \
+		$(MAKE) -C tests test CC=clang WITH_JSONC=1 WITH_PYTHON=0 SANITIZE=1 SANITIZE_KIND=thread WERROR=1 >/dev/null
+	@echo "OK: tsan"
 
 # clang-tidy on changed C sources (relative to base ref).
 TIDY_BASE_REF ?= origin/main

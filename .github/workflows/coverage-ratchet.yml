@@ -1,0 +1,52 @@
+name: Coverage Ratchet
+
+on:
+  schedule:
+    # Weekly on Monday 04:11 UTC
+    - cron: "11 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  ratchet:
+    name: Raise COVERAGE_MIN when safe
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            gcc \
+            libjson-c-dev \
+            pkg-config \
+            python3 \
+            python3-pip
+
+      - name: Install gcovr (coverage)
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install gcovr
+
+      - name: Attempt ratchet
+        run: |
+          chmod +x scripts/coverage_ratchet.py
+          python3 scripts/coverage_ratchet.py
+
+      - name: Create PR (if changed)
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "CI: ratchet coverage gate"
+          title: "CI: ratchet coverage gate"
+          body: |
+            Automated weekly ratchet: raises `COVERAGE_MIN` only when current measured
+            line coverage exceeds the new target by headroom.
+          branch: "ci/coverage-ratchet"
+          delete-branch: true
+          base: main
+

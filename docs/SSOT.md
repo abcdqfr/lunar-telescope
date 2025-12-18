@@ -91,6 +91,28 @@ This is how we avoid long-lived divergent branches while still serving constrain
     2. `compositor/` (needs harness/mocks)
     3. `lenses/` (needs fake lens exec/harness; real binaries are external)
 
+## “Jumped the shark” guardrails (CI/CD maturity without self-harm)
+
+We’ve **jumped the shark** when CI strictness stops buying correctness and starts buying churn.
+
+- **Latency budget**
+  - PR-required checks should finish in ~5–10 minutes on GitHub-hosted runners.
+  - Anything slower goes to **nightly** (e.g., TSan, full-project heavy analyzers).
+
+- **False-positive tolerance**
+  - If a check produces recurring noise that doesn’t correspond to real defects, it’s a candidate for:
+    - narrowing scope (changed-files only),
+    - moving to nightly,
+    - or removing until we have the harness/compdb to make it accurate.
+
+- **Gating scope discipline**
+  - Gate “whole repo” only when it’s cheap and stable.
+  - Prefer **changed-files gating** for style/tidy, and use Nix to keep flags/includes deterministic.
+
+- **Signal first**
+  - Add checks that either (a) prevent real production bugs, or (b) increase test signal.
+  - Avoid checks that enforce taste without strong defect reduction.
+
 - **PR-only trunk**
   - Protect `main` with GitHub branch protection:
     - require PRs (no direct pushes)

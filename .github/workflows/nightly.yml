@@ -1,0 +1,56 @@
+name: Nightly Hardening
+
+on:
+  schedule:
+    # 03:17 UTC nightly (off-peak, avoid top-of-hour contention)
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  harden:
+    name: TSan + Extended Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            gcc \
+            clang \
+            clang-tidy \
+            libjson-c-dev \
+            pkg-config \
+            python3 \
+            python3-pip
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install gcovr (coverage)
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install gcovr
+
+      - name: TSan (C)
+        run: |
+          make preflight-tsan
+
+      - name: clang-tidy (C analyzer)
+        run: |
+          make preflight-tidy TIDY_ALL=1
+
+      - name: Coverage (C)
+        run: |
+          make coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: build/coverage/
+          if-no-files-found: warn
+

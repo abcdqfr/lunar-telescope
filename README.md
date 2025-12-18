@@ -53,7 +53,6 @@ This aligns directly with:
 * Compositors
 * Video pipelines
 
-Rust is acceptable **only** as an isolated implementation detail behind a C ABI.
 Python is not used in the runtime.
 
 ---
@@ -162,9 +161,7 @@ lunar-telescope/
 │   ├── wl_surface.c
 │   └── compositor.h
 │
-├── rust/                 # Optional Rust island (ABI-stable)
-│   └── input_predictor/
-│
+
 ├── include/              # Public headers (upstreamable)
 │
 ├── tests/                # Unit + latency tests
@@ -249,6 +246,7 @@ If you want, next logical steps would be:
 * Or a brutally honest **Rust island justification doc** so it doesn't creep
 
 This README is the moment the project stops being "clever" and starts being *serious*.
+
 
 
 

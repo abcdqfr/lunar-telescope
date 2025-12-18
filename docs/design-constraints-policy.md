@@ -10,6 +10,7 @@
 
    * Do not include Waypipe, Sunshine, Moonlight source code.
    * All dependencies must be installed from the system (e.g., nixpkgs).
+   * Build scripts must not download mutable upstream sources at build time.
 
 2. **No submodules for upstream**
 
@@ -35,6 +36,12 @@
 
    * Build must rely on system-provided packages.
    * Ensure reproducibility and maintainability.
+
+7. **Constraints breed determinism**
+
+   * Determinism is a first-class feature: builds should be explainable, reproducible, and free of “magic” network fetches.
+   * Upstream dependencies are treated as **external runtime components**; their licenses and distribution terms remain governed by their own LICENSE files.
+   * See `docs/UPSTREAM_DEPENDENCIES.md` and `docs/SSOT.md`.
 
 ### Enforcement
 

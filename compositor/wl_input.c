@@ -1,4 +1,3 @@
-#define _POSIX_C_SOURCE 200809L
 #include "compositor.h"
 #include "../input/input.h"
 #include <stdlib.h>
@@ -24,6 +23,10 @@ struct input_device_entry {
 static bool g_hooks_initialized = false;
 static struct input_device_entry *g_input_devices = NULL;
 static struct input_proxy *g_global_input_proxy = NULL;
+
+struct input_proxy *compositor_get_global_input_proxy(void) {
+    return g_global_input_proxy;
+}
 
 int compositor_hooks_init(void) {
     if (g_hooks_initialized) {

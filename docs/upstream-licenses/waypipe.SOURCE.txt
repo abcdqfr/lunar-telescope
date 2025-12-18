@@ -1,0 +1,4 @@
+# Waypipe upstream license sources
+# Repo: https://gitlab.freedesktop.org/mstoeckl/waypipe
+https://gitlab.freedesktop.org/mstoeckl/waypipe/-/raw/master/LICENSE.GPLv3
+https://gitlab.freedesktop.org/mstoeckl/waypipe/-/raw/master/LICENSE.MIT

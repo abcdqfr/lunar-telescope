@@ -1,0 +1,3 @@
+# Source URLs tried (first successful is used)
+https://raw.githubusercontent.com/LizardByte/Sunshine/master/LICENSE
+# Fetched: https://raw.githubusercontent.com/LizardByte/Sunshine/master/LICENSE

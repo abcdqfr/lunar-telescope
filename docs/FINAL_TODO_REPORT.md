@@ -1,8 +1,11 @@
 # Lunar Telescope - Final TODO Report
 
-**Generated:** Wed Dec 17 12:21:15 PM CST 2025  
-**Status:** Production-Ready Framework  
+**Generated:** Wed Dec 17 12:21:15 PM CST 2025
+**Status:** Production-Ready Framework
 **Completion:** High & Medium Priority Tasks: 100% ✅
+
+> **Update (Thu Dec 18 2025):** This report is a historical snapshot. The codebase has since changed and some TODOs referenced below may no longer exist.
+> For the current, authoritative TODO marker list, see `docs/remaining-todos.txt`.
 
 ---
 
@@ -25,8 +28,7 @@ Lunar Telescope has achieved **production-ready status** with all critical path 
 
 ### 1. Core Infrastructure (100%)
 - ✅ JSON schema validation (`schemas/waypipe-schema.json`)
-- ✅ Performance profiles (`profiles/waypipe-performance-profiles.py`)
-- ✅ Smart connection orchestration (`scripts/waypipe-connect-smart.sh`)
+- ✅ Performance profiles (`core/profiles.c`)
 - ✅ Configuration parsing (`core/schema.c`)
 - ✅ Session management (`core/telescope.c`)
 - ✅ Profile application (`core/profiles.c`)
@@ -36,8 +38,6 @@ Lunar Telescope has achieved **production-ready status** with all critical path 
 - ✅ Input proxy with prediction (`input/input_proxy.c`)
 - ✅ Scroll smoothing (`input/scroll_smoother.c`)
 - ✅ Input reconciliation with frame tracking (`input/input_proxy.c`)
-- ✅ Rust predictor module (`rust/input_predictor/`)
-- ✅ Rust-C integration (`input/rust_predictor.h`, `rust_predictor_stub.c`)
 - ✅ Frame ID-based event tracking
 - ✅ Prediction accuracy comparison
 
@@ -58,14 +58,13 @@ Lunar Telescope has achieved **production-ready status** with all critical path 
 
 ### 5. Build System (100%)
 - ✅ Main project Makefile with all targets
-- ✅ Rust integration (cargo build)
 - ✅ Static and shared library generation
 - ✅ Install/uninstall targets
 - ✅ Test build integration
 - ✅ Dependency management (pkg-config)
 
 ### 6. Testing (100%)
-- ✅ Unit tests (C and Python)
+- ✅ Unit tests (C)
 - ✅ Integration test framework (`tests/test_integration.c`)
 - ✅ Test Makefile with all targets
 - ✅ Schema validation tests
@@ -96,7 +95,7 @@ Lunar Telescope has achieved **production-ready status** with all critical path 
 ### High Priority: 0 items
 **Status:** All high priority tasks completed ✅
 
-### Medium Priority: 0 items  
+### Medium Priority: 0 items
 **Status:** All medium priority tasks completed ✅
 
 ### Low Priority / Integration Stubs: 22 items
@@ -185,7 +184,7 @@ These are framework hooks ready for wlroots integration:
 | **Metrics** | 1 | 1 | 0 | ✅ 100% |
 | **TOTAL** | 50 | 37 | 13 | ✅ 74% |
 
-**Note:** Remaining items are primarily integration stubs that require external dependencies (wlroots) or optional features (Sunshine/Moonlight).
+**Note:** Remaining items are primarily integration work that requires external dependencies (wlroots) and follow-up work on Sunshine/Moonlight metrics behavior (upstreams are required at runtime).
 
 ---
 
@@ -204,7 +203,7 @@ These are framework hooks ready for wlroots integration:
 ### ⏳ Pending Integration (Non-Blocking)
 
 - **wlroots Integration:** Framework ready, requires wlroots availability
-- **Sunshine/Moonlight Lenses:** Optional, framework ready
+- **Sunshine/Moonlight Lenses:** Required runtime upstreams; metrics behavior still needs a policy decision
 - **API Documentation:** Optional enhancement
 
 ### 🚀 Deployment Readiness
@@ -228,9 +227,9 @@ The framework can be:
 2. Implement wlroots frame callbacks in `compositor/wl_surface.c`
 3. Test full compositor integration
 
-### Short Term (Optional)
-1. Implement Sunshine lens adapter
-2. Implement Moonlight lens adapter
+### Short Term (Required for the full promise)
+1. Decide Sunshine/Moonlight metrics policy (implement vs explicitly unsupported)
+2. Add real Sunshine/Moonlight metrics collection if supported
 3. Add Prometheus metrics export
 4. Add InfluxDB metrics export
 
@@ -318,8 +317,8 @@ The project successfully delivers on its core mission: a first-class Waypipe-bas
 
 ---
 
-**Report Generated:** Wed Dec 17 12:21:15 PM CST 2025  
-**Project Status:** ✅ Production Ready  
+**Report Generated:** Wed Dec 17 12:21:15 PM CST 2025
+**Project Status:** ✅ Production Ready
 **Next Milestone:** wlroots Integration (when available)
 
 

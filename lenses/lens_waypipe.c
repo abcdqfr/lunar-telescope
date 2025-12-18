@@ -1,5 +1,3 @@
-#define _POSIX_C_SOURCE 200809L
-#define _XOPEN_SOURCE 500
 #include "lens.h"
 #include "../core/telescope.h"
 #include <stdio.h>
@@ -156,14 +154,30 @@ static int waypipe_start(struct lens_session *session) {
     if (ret < 0) {
         return ret;
     }
-    
+
+    /* Exec handshake: detect execvp() failure reliably (missing binary, etc.) */
+    int exec_pipe[2];
+    if (pipe(exec_pipe) != 0) {
+        free_waypipe_argv(waypipe_argv, waypipe_argc);
+        return -errno;
+    }
+    if (fcntl(exec_pipe[1], F_SETFD, FD_CLOEXEC) != 0) {
+        close(exec_pipe[0]);
+        close(exec_pipe[1]);
+        free_waypipe_argv(waypipe_argv, waypipe_argc);
+        return -errno;
+    }
+
     pid_t pid = fork();
     if (pid < 0) {
+        close(exec_pipe[0]);
+        close(exec_pipe[1]);
         free_waypipe_argv(waypipe_argv, waypipe_argc);
         return -errno;
     }
     
     if (pid == 0) {
+        close(exec_pipe[0]); /* child writes */
         if (ws->config->application.env_count > 0) {
             for (size_t i = 0; i < ws->config->application.env_count; i++) {
                 putenv(ws->config->application.env[i]);
@@ -171,17 +185,36 @@ static int waypipe_start(struct lens_session *session) {
         }
         
         if (ws->config->application.working_directory) {
-            chdir(ws->config->application.working_directory);
+            if (chdir(ws->config->application.working_directory) != 0) {
+                /* Ignore chdir errors in child process; exec will likely fail next anyway. */
+            }
         }
         
         execvp("waypipe", waypipe_argv);
+        int err = errno;
+        ssize_t _ignored = write(exec_pipe[1], &err, sizeof(err));
+        (void)_ignored;
         _exit(127);
     }
-    
+
+    close(exec_pipe[1]); /* parent reads */
+    free_waypipe_argv(waypipe_argv, waypipe_argc);
+
+    int child_errno = 0;
+    ssize_t n;
+    do {
+        n = read(exec_pipe[0], &child_errno, sizeof(child_errno));
+    } while (n < 0 && errno == EINTR);
+    close(exec_pipe[0]);
+
+    if (n > 0) {
+        /* Child reported exec failure. */
+        (void)waitpid(pid, NULL, 0);
+        return -child_errno;
+    }
+
     ws->waypipe_pid = pid;
     session->process_pid = pid;
-    
-    free_waypipe_argv(waypipe_argv, waypipe_argc);
     
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);

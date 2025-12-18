@@ -89,7 +89,6 @@ Lunar Telescope is a **C-first orchestration layer** for remote Wayland applicat
 - Predictive input processing
 - Frame ID-based event tracking
 - Reconciliation with server acknowledgments
-- Rust predictor integration
 
 **scroll_smoother.c**
 - Velocity-based scroll smoothing
@@ -100,11 +99,6 @@ Lunar Telescope is a **C-first orchestration layer** for remote Wayland applicat
 - Frame-to-event mapping
 - Prediction accuracy tracking
 - Correction application
-
-**rust_predictor.h / rust_predictor_stub.c**
-- C ABI wrapper for Rust predictor
-- Graceful fallback when Rust unavailable
-- High-performance velocity tracking
 
 ### Compositor Integration (`compositor/`)
 
@@ -133,8 +127,7 @@ Lunar Telescope is a **C-first orchestration layer** for remote Wayland applicat
 - Process management
 
 **lens_sunshine.c / lens_moonlight.c**
-- Stubs for future implementation
-- Framework ready for integration
+- Implementations following the Waypipe pattern (fork/exec + exec handshake)
 
 ## Data Flow
 
@@ -149,12 +142,8 @@ Compositor Hook (wl_input.c)
     ▼
 Input Proxy (input_proxy.c)
     │
-    ├─→ Rust Predictor (if available)
-    │   └─→ Velocity Tracking
-    │       └─→ Prediction
-    │
-    └─→ C Fallback Predictor
-        └─→ Simple Extrapolation
+    └─→ C Predictor
+        └─→ Simple extrapolation
     │
     ▼
 Predicted Event + Frame ID
@@ -277,13 +266,12 @@ compositor_notify_frame_presented()
 
 ### Components
 - **Core C modules**: Compiled to object files, linked into library
-- **Rust predictor**: Built as cdylib, linked statically or dynamically
 - **Tests**: Separate test executables with Makefile
 - **Installation**: Libraries and headers to system paths
 
 ### Dependencies
 - **System**: waypipe, json-c, libwayland (for compositor)
-- **Build**: gcc/clang, cargo, pkg-config
+- **Build**: gcc/clang, pkg-config
 - **Optional**: wlroots (for full compositor integration)
 
 ## Future Enhancements
@@ -302,11 +290,10 @@ compositor_notify_frame_presented()
 - Predictable performance characteristics
 - Easy integration with upstream projects
 
-### Why Rust for Predictor?
-- Performance-critical algorithms benefit from Rust's safety
-- Isolated as "performance island" behind C ABI
-- No impact on core architecture
-- Can be replaced with C implementation if needed
+### Why C-only?
+- Fewer toolchains and fewer moving parts
+- Deterministic builds and simpler packaging
+- Direct alignment with Wayland/wlroots/libinput ecosystems
 
 ### Why Glue Layer Only?
 - Maintains upstream compatibility

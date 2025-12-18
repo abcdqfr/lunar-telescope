@@ -1,15 +1,18 @@
-#define _POSIX_C_SOURCE 200809L
 #include "telescope.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+
+#if defined(LT_HAVE_JSONC) && (LT_HAVE_JSONC)
 #include <json-c/json.h>
+#endif
 
 /**
  * Schema validation and JSON parsing for telescope configuration
  */
 
+#if defined(LT_HAVE_JSONC) && (LT_HAVE_JSONC)
 static int parse_connection(json_object *obj, telescope_connection_t *conn) {
     json_object *tmp;
     
@@ -335,6 +338,14 @@ int telescope_config_load(const char *config_path, struct telescope_config **con
     *config_out = config;
     return 0;
 }
+#else
+int telescope_config_load(const char *config_path, struct telescope_config **config_out) {
+    (void)config_path;
+    (void)config_out;
+    /* Built without json-c support. */
+    return -ENOTSUP;
+}
+#endif
 
 void telescope_config_free(struct telescope_config *config) {
     if (!config) {

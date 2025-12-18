@@ -49,6 +49,24 @@
       "--query-driver=**"
     ],
 
+    "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.cargo.buildScripts.enable": true,
+    "rust-analyzer.cargo.allFeatures": true,
+    "rust-analyzer.procMacro.enable": true,
+    "rust-analyzer.inlayHints.bindingModeHints.enable": true,
+    "rust-analyzer.inlayHints.chainingHints.enable": true,
+    "rust-analyzer.inlayHints.closingBraceHints.enable": true,
+    "rust-analyzer.inlayHints.closureReturnTypeHints.enable": "always",
+    "rust-analyzer.inlayHints.lifetimeElisionHints.enable": "always",
+    "rust-analyzer.inlayHints.parameterHints.enable": true,
+    "rust-analyzer.inlayHints.typeHints.enable": true,
+
+    "python.defaultInterpreterPath": "python3",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoImportCompletions": true,
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": false,
+
     "shellcheck.enable": true,
     "[shellscript]": {
       "editor.defaultFormatter": "foxundermoon.shell-format"
@@ -65,6 +83,9 @@
       "llvm-vs-code-extensions.vscode-clangd",
       "ms-vscode.makefile-tools",
       "vadimcn.vscode-lldb",
+      "rust-lang.rust-analyzer",
+      "tamasfe.even-better-toml",
+      "ms-python.python",
       "mkhl.shfmt",
       "foxundermoon.shell-format",
       "timonwong.shellcheck",
@@ -90,10 +111,28 @@
         "options": { "cwd": "${workspaceFolder}" }
       },
       {
+        "label": "make: all (WITH_RUST=1)",
+        "type": "shell",
+        "command": "make",
+        "args": ["WITH_RUST=1", "-j", "${command:makefile.numJobs}"],
+        "group": "build",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
         "label": "make: all (no json-c) [portable]",
         "type": "shell",
-        "command": "make WITH_JSONC=0 -j",
-        "args": ["${command:makefile.numJobs}"],
+        "command": "make",
+        "args": ["WITH_JSONC=0", "-j", "${command:makefile.numJobs}"],
+        "group": "build",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
+        "label": "make: all (no rust, no json-c) [portable]",
+        "type": "shell",
+        "command": "make",
+        "args": ["WITH_RUST=0", "WITH_JSONC=0", "-j", "${command:makefile.numJobs}"],
         "group": "build",
         "problemMatcher": ["$gcc"],
         "options": { "cwd": "${workspaceFolder}" }
@@ -134,36 +173,25 @@
         "problemMatcher": [],
         "options": { "cwd": "${workspaceFolder}" }
       },
-
-    ]
-  },
-  "launch": {
-    "version": "0.2.0",
-    "configurations": [
       {
-        "name": "Debug: tests/test_input (gdb)",
-        "type": "cppdbg",
-        "request": "launch",
-        "program": "${workspaceFolder}/tests/test_input",
-        "args": [],
-        "cwd": "${workspaceFolder}/tests",
-        "stopAtEntry": false,
-        "MIMode": "gdb",
-        "miDebuggerPath": "/usr/bin/gdb",
-        "preLaunchTask": "make: test (no json-c) [portable]"
+        "label": "rust: build input_predictor (release)",
+        "type": "shell",
+        "command": "cargo",
+        "args": ["build", "--release"],
+        "group": "build",
+        "problemMatcher": ["$rustc"],
+        "options": { "cwd": "${workspaceFolder}/rust/input_predictor" }
       },
       {
-        "name": "Debug: tests/test_schema (gdb)",
-        "type": "cppdbg",
-        "request": "launch",
-        "program": "${workspaceFolder}/tests/test_schema",
-        "args": [],
-        "cwd": "${workspaceFolder}/tests",
-        "stopAtEntry": false,
-        "MIMode": "gdb",
-        "miDebuggerPath": "/usr/bin/gdb",
-        "preLaunchTask": "make: test"
+        "label": "rust: test input_predictor",
+        "type": "shell",
+        "command": "cargo",
+        "args": ["test"],
+        "group": "test",
+        "problemMatcher": ["$rustc"],
+        "options": { "cwd": "${workspaceFolder}/rust/input_predictor" }
       }
+
     ]
   }
 }

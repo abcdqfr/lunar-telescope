@@ -4,16 +4,15 @@ This repo treats **constraints as product**: dependencies are explicit, tiered, 
 
 ## Runtime (system/userland) — REQUIRED
 
-These are the upstream transports (“lenses”) Lunar Telescope orchestrates. If you only install `waypipe`, you’re not exercising the core promise of this repo (lens arbitration across transports).
+These are the upstream transports (“lenses”) Lunar Telescope orchestrates.
 
-- **`waypipe`**: protocol-correct baseline
-- **`sunshine`**: high-motion streaming backend
-- **`moonlight`**: low-latency client/decode stack
+- **`waypipe`**: protocol-correct baseline (**required**)
+- **`sunshine`**: high-motion streaming backend (**optional accelerator**)
+- **`moonlight`**: low-latency client/decode stack (**optional accelerator**)
 
 Check:
 
-- `make check-runtime` (strict; exits non-zero if any are missing)
-- Escape hatch (explicit degraded mode): `make ALLOW_INCOMPLETE_RUNTIME=1 check-runtime`
+- `make check-runtime` (fails if `waypipe` is missing; reports Sunshine/Moonlight status without failing)
 
 ## Build (system) — REQUIRED for default `make`
 
@@ -24,5 +23,12 @@ Check:
 Escape hatches (explicit degraded builds):
 
 - `make WITH_JSONC=0` (JSON config parsing becomes unsupported; loader returns `-ENOTSUP`)
+
+## Optional accelerators / tooling
+
+These must never block the C-only baseline, but they improve performance/UX when present:
+
+- **Rust toolchain** (`cargo`): enable with `make WITH_RUST=1`
+- **Python 3** (`python3`): enables scripts and Python tests (tests auto-skip if unavailable)
 
 

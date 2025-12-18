@@ -6,9 +6,11 @@ CFLAGS = -Wall -Wextra -g -std=c11 $(FEATURE_MACROS)
 INCLUDES = -I../core -I../input
 
 WITH_JSONC ?= 1
+WITH_PYTHON ?= 1
 
 HAVE_PKG_CONFIG := $(shell command -v pkg-config >/dev/null 2>&1 && echo 1 || echo 0)
 HAVE_JSONC := $(shell pkg-config --exists json-c >/dev/null 2>&1 && echo 1 || echo 0)
+HAVE_PYTHON3 := $(shell command -v python3 >/dev/null 2>&1 && echo 1 || echo 0)
 
 JSON_C_CFLAGS :=
 JSON_C_LDLIBS :=
@@ -54,7 +56,7 @@ test_schema: ./test_schema.c $(CORE_DIR)/schema.c $(CORE_DIR)/profiles.c $(CORE_
 	$(CC) $(CFLAGS) $(INCLUDES) $(JSON_C_CFLAGS) -o $@ $^ $(LDLIBS) $(JSON_C_LDLIBS)
 endif
 
-test_input: ./test_input.c $(INPUT_DIR)/input_proxy.c $(INPUT_DIR)/scroll_smoother.c $(CORE_DIR)/logging.c $(CORE_DIR)/utils.c
+test_input: ./test_input.c $(INPUT_DIR)/input_proxy.c $(INPUT_DIR)/scroll_smoother.c $(INPUT_DIR)/rust_predictor_stub.c $(CORE_DIR)/logging.c $(CORE_DIR)/utils.c
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDLIBS)
 
 ifeq ($(WITH_JSONC),1)
@@ -92,5 +94,14 @@ ifeq ($(WITH_JSONC),1)
 else
 	@echo "Integration test skipped (WITH_JSONC=0)"
 endif
-	@true
+ifeq ($(WITH_PYTHON),1)
+	@if [ "$(HAVE_PYTHON3)" = "1" ]; then \
+		python3 test_profiles.py || (echo "Python profile test failed" && exit 1); \
+		python3 test_schema_validation.py || (echo "Python schema test failed" && exit 1); \
+	else \
+		echo "Python tests skipped (python3 not found)"; \
+	fi
+else
+	@echo "Python tests skipped (WITH_PYTHON=0)"
+endif
 

@@ -18,6 +18,20 @@ The tunnel selects a lens and delegates start/stop to it.
 - The authoritative upstream policy is `docs/UPSTREAM_DEPENDENCIES.md` (and the enforcement policy is `docs/design-constraints-policy.md`).
 - For acquisition vs licensing rationale, see `docs/DEPENDENCY_ACQUISITION.md`.
 
+## Hybrid mainline contract (single-branch strategy)
+
+We converged back to **one mainline** with an explicit hybrid contract:
+
+- **C-only baseline (must always work)**:
+  - The core build and runtime experience must work without Rust or Python.
+  - This is the “widest reach” and “determinism first” contract.
+
+- **Optional accelerators (must never block baseline)**:
+  - **Rust**: performance island for input prediction (enable with `WITH_RUST=1`).
+  - **Python**: tooling and UX (profiles/scripts/tests); never required to build the C core.
+
+This is how we avoid long-lived divergent branches while still serving constrained environments.
+
 ## Portability policy (Linux-first, widest reach)
 
 - **Feature-test macros are global** (never per-file):

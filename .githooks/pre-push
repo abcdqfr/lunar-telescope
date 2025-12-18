@@ -15,18 +15,22 @@ set -euo pipefail
 # Git allows bypassing hooks. In this project, bypassing pre-push verification is a
 # violation of project policy. Enforce server-side with branch protection rules.
 
-echo "[pre-push] Running Lunar Telescope preflight (baseline always, CI-equivalent if available)..."
+echo "[pre-push] Running Lunar Telescope preflight (baseline + strict)..."
 
 # Baseline must always pass (no Rust/Python/json-c required).
 make preflight-baseline
 
-# CI-equivalent preflight is required for PR readiness, but can only be enforced
-# if the toolchain is present on the developer machine.
-if command -v python3 >/dev/null 2>&1 && command -v cargo >/dev/null 2>&1 && command -v pkg-config >/dev/null 2>&1; then
-  make preflight-ci
+# Stricter-than-CI local preflight (includes C coverage).
+# Policy: this should be mandatory for pushes to cut down public CI failures.
+if command -v nix >/dev/null 2>&1; then
+  nix develop -c make preflight-strict
+elif command -v python3 >/dev/null 2>&1 && command -v cargo >/dev/null 2>&1 && command -v pkg-config >/dev/null 2>&1 && command -v gcovr >/dev/null 2>&1; then
+  make preflight-strict
 else
-  echo "[pre-push] NOTE: skipping preflight-ci (missing python3/cargo/pkg-config)."
-  echo "[pre-push]       PR route will enforce CI server-side; install deps to catch failures earlier."
+  echo "[pre-push] ERROR: missing strict preflight toolchain."
+  echo "[pre-push]        Recommended: install Nix and rerun (or enter: nix develop)."
+  echo "[pre-push]        Fallback: install python3, cargo, pkg-config, json-c dev, and gcovr."
+  exit 1
 fi
 
 echo "[pre-push] OK"

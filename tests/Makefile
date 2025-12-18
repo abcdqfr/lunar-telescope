@@ -1,10 +1,26 @@
 # Makefile for Lunar Telescope tests
 
-CC = gcc
+CC ?= gcc
 FEATURE_MACROS = -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700
 DEFS :=
 WITH_JSONC ?= 1
 WITH_PYTHON ?= 1
+
+# Strictness toggles
+WERROR ?= 0
+WERROR_CFLAGS :=
+ifeq ($(WERROR),1)
+WERROR_CFLAGS += -Werror
+endif
+
+SANITIZE ?= 0
+SANITIZE_KIND ?= address,undefined
+SANITIZE_CFLAGS :=
+SANITIZE_LDFLAGS :=
+ifeq ($(SANITIZE),1)
+SANITIZE_CFLAGS += -O1 -fno-omit-frame-pointer -fsanitize=$(SANITIZE_KIND) -fno-sanitize-recover=all
+SANITIZE_LDFLAGS += -fsanitize=$(SANITIZE_KIND)
+endif
 
 ifeq ($(WITH_JSONC),1)
 DEFS += -DLT_HAVE_JSONC=1
@@ -12,7 +28,7 @@ else
 DEFS += -DLT_HAVE_JSONC=0
 endif
 
-CFLAGS = -Wall -Wextra -g -std=c11 $(FEATURE_MACROS) $(DEFS)
+CFLAGS = -Wall -Wextra -g -std=c11 $(FEATURE_MACROS) $(DEFS) $(WERROR_CFLAGS) $(SANITIZE_CFLAGS)
 INCLUDES = -I../core -I../input
 
 HAVE_PKG_CONFIG := $(shell command -v pkg-config >/dev/null 2>&1 && echo 1 || echo 0)
@@ -28,7 +44,7 @@ JSON_C_LDLIBS := $(shell pkg-config --libs json-c)
 endif
 endif
 
-LDLIBS = -lm
+LDLIBS = -lm $(SANITIZE_LDFLAGS)
 
 # Source directories
 CORE_DIR = ../core
@@ -46,7 +62,7 @@ endif
 all: $(TESTS)
 
 ifeq ($(WITH_JSONC),1)
-test_schema: ./test_schema.c $(CORE_DIR)/schema.c $(CORE_DIR)/profiles.c $(CORE_DIR)/telescope.c $(CORE_DIR)/metrics.c $(CORE_DIR)/logging.c $(CORE_DIR)/utils.c
+test_schema: ./test_schema.c $(CORE_DIR)/schema.c $(CORE_DIR)/profiles.c
 	@command -v pkg-config >/dev/null 2>&1 || { \
 		echo "Error: pkg-config not found (required for json-c)."; \
 		echo "Tip: run `make WITH_JSONC=0 test` to skip schema parsing tests."; \

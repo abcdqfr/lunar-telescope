@@ -72,12 +72,52 @@ This is how we avoid long-lived divergent branches while still serving constrain
 
 - **Preflight before pushing**
   - Policy: run CI-equivalent checks locally before pushing to avoid public CI churn.
-  - PR route reality: we enforce baseline always, and CI-equivalent when the toolchain exists.
+  - We enforce **strict local-first** checks (>= CI) via Nix.
   - The pre-push hook runs:
-    - `make preflight-baseline` (always)
-    - `make preflight-ci` (only if python3+cargo+pkg-config exist)
+    - `make preflight-baseline` (always, gcc, -Werror)
+    - `make preflight-strict` (via `nix develop -c …`):
+      - CI-equivalent build+tests (gcc, -Werror)
+      - C sanitizers (clang ASan+UBSan)
+      - clang-tidy analyzer gate
+      - C coverage gate
   - Hooks are auto-installed on the first `make` run (`make hooks-install`), unless `CI=true`.
   - **No-bypass policy**: bypassing verification is considered a violation of project policy. Enforce with GitHub branch protection (PRs + required checks).
+
+- **Coverage ratchet (C is the meat)**
+  - Current CI gate: **25% line coverage** (measured via `gcovr`).
+  - Policy: ratchet upward by **+2% per week** (or per meaningful test PR) until we’re in a healthy range.
+  - Priority order for new tests:
+    1. `core/` + `input/` (high-signal logic, easiest to unit test)
+    2. `compositor/` (needs harness/mocks)
+    3. `lenses/` (needs fake lens exec/harness; real binaries are external)
+
+## “Jumped the shark” guardrails (CI/CD maturity without self-harm)
+
+We’ve **jumped the shark** when CI strictness stops buying correctness and starts buying churn.
+
+- **Latency budget**
+  - PR-required checks should finish in ~5–10 minutes on GitHub-hosted runners.
+  - Anything slower goes to **nightly** (e.g., TSan, full-project heavy analyzers).
+
+- **False-positive tolerance**
+  - If a check produces recurring noise that doesn’t correspond to real defects, it’s a candidate for:
+    - narrowing scope (changed-files only),
+    - moving to nightly,
+    - or removing until we have the harness/compdb to make it accurate.
+
+- **Gating scope discipline**
+  - Gate “whole repo” only when it’s cheap and stable.
+  - Prefer **changed-files gating** for style/tidy, and use Nix to keep flags/includes deterministic.
+
+- **Signal first**
+  - Add checks that either (a) prevent real production bugs, or (b) increase test signal.
+  - Avoid checks that enforce taste without strong defect reduction.
+
+## IDE empowerment (clangd)
+
+- Generate `compile_commands.json` for accurate clangd diagnostics/completions:
+  - `nix develop -c make compdb`
+  - This captures both the library build and `tests/` build, and reflects the same flags we use in CI (gcc, WERROR, json-c enabled).
 
 - **PR-only trunk**
   - Protect `main` with GitHub branch protection:

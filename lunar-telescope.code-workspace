@@ -183,6 +183,42 @@
         "options": { "cwd": "${workspaceFolder}" }
       },
       {
+        "label": "nix: preflight-ci (devshell)",
+        "type": "shell",
+        "command": "nix",
+        "args": ["develop", "-c", "make", "preflight-ci", "WITH_RUST=1", "WITH_JSONC=1"],
+        "group": "test",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
+        "label": "nix: preflight-strict (devshell)",
+        "type": "shell",
+        "command": "nix",
+        "args": ["develop", "-c", "make", "preflight-strict"],
+        "group": "test",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
+        "label": "nix: coverage (devshell)",
+        "type": "shell",
+        "command": "nix",
+        "args": ["develop", "-c", "make", "coverage"],
+        "group": "test",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
+        "label": "nix: compdb (compile_commands.json)",
+        "type": "shell",
+        "command": "nix",
+        "args": ["develop", "-c", "make", "compdb"],
+        "group": "build",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
         "label": "gh: create PR (self-PR flow)",
         "type": "shell",
         "command": "make",

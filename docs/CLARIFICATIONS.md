@@ -11,7 +11,7 @@ This document clarifies potentially ambiguous aspects of the implementation.
 - `input/reconciliation.c` - **Legacy stub file** (not currently used)
   - Contains an old stub implementation
   - Can be removed or kept for reference
-  
+
 - `input/input_proxy.c` - **Active implementation** (lines 227-326)
   - Contains the full reconciliation implementation
   - Tracks pending predictions with frame IDs
@@ -20,43 +20,9 @@ This document clarifies potentially ambiguous aspects of the implementation.
 
 **Action:** The `reconciliation.c` file is redundant and can be removed. The Makefile currently compiles it, but the actual function is defined in `input_proxy.c`.
 
-## 2. Rust Predictor Linking
+## 2. Predictor Implementation (C-only)
 
-**Question:** How does the Rust predictor get linked?
-
-**Answer:** The system uses a **graceful fallback** approach:
-
-1. **Build Time:**
-   - Rust library is built as `libinput_predictor.so` (cdylib)
-   - Stub implementation is compiled as `rust_predictor_stub.o`
-   - Both are linked into the shared library
-
-2. **Runtime:**
-   - `input_proxy.c` calls `rust_input_predictor_create()`
-   - If Rust library is available: Returns real predictor handle
-   - If Rust library is unavailable: Stub returns `NULL`
-   - Input proxy falls back to C-based prediction if Rust unavailable
-
-3. **Current Implementation:**
-   - The stub functions return `NULL` or error codes
-   - Input proxy checks `proxy->rust_predictor != NULL` before use
-   - If NULL, uses C fallback prediction (simple extrapolation)
-
-**Note:** For full Rust integration, the stub should be replaced with actual dynamic loading (`dlopen`) or static linking. Currently, the Makefile links the Rust SO, but the stub provides fallback.
-
-## 3. Makefile Build Command
-
-**Question:** Why is the reconciliation.o target incomplete?
-
-**Answer:** There's a missing compile command in the Makefile (line 121-122).
-
-**Fix Required:**
-```makefile
-$(OBJ_DIR)/reconciliation.o: $(INPUT_DIR)/reconciliation.c $(INPUT_DIR)/input.h | $(OBJ_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
-```
-
-**Note:** Since reconciliation is actually implemented in `input_proxy.c`, this target may not be needed, or the file can be removed.
+Input prediction is implemented entirely in C (`input/input_proxy.c`), with a minimal, deterministic predictor suitable for short prediction windows.
 
 ## 4. Compositor Integration Status
 
@@ -181,7 +147,6 @@ This allows Rust to use floating-point math efficiently while C maintains intege
 - **Critical Errors:** Return negative error codes (errno-style)
 - **Non-Critical:** Log and continue (e.g., metrics file write failure)
 - **Missing Dependencies:** Fallback to alternatives:
-  - Rust predictor unavailable → C fallback
   - Metrics file unwritable → Continue without file output
   - Waypipe not found → Return error (can't proceed)
 
@@ -201,26 +166,20 @@ if (optional_operation() < 0) {
 
 **Question:** What are the actual build dependencies?
 
-**Answer:** 
+**Answer:**
 
 **Required:**
 - `gcc` or `clang` (C compiler)
-- `cargo` (Rust toolchain)
 - `pkg-config` (for dependency detection)
 - `json-c` development package
 - `make` (build system)
 
-**Optional (for full functionality):**
-- `waypipe` (runtime, not build-time)
-- `libwayland-dev` (for compositor integration)
-- `wlroots` (for compositor integration)
+**Runtime (system-installed, required for intended use):**
+- `waypipe`
+- `sunshine`
+- `moonlight`
 
-**Runtime (system-installed):**
-- `waypipe` (required for waypipe lens)
-- `sunshine` (optional, for sunshine lens)
-- `moonlight` (optional, for moonlight lens)
-
-The build system uses `pkg-config` to detect available dependencies and gracefully handles missing optional ones.
+The build system uses `pkg-config` to detect available dependencies and provides an explicit escape hatch (`WITH_JSONC=0`) for constrained environments.
 
 ---
 
@@ -229,10 +188,8 @@ The build system uses `pkg-config` to detect available dependencies and graceful
 The implementation is **production-ready** with clear extension points. The main areas needing clarification were:
 
 1. ✅ Reconciliation implementation location (clarified)
-2. ✅ Rust linking mechanism (clarified)
-3. ✅ Makefile build command (needs fix)
-4. ✅ Compositor integration readiness (clarified)
-5. ✅ Lens adapter implementation pattern (documented)
+2. ✅ Compositor integration readiness (clarified)
+3. ✅ Lens adapter implementation pattern (documented)
 
-All critical functionality is complete and well-documented. Remaining work is primarily integration with external systems (wlroots, optional transports).
+All critical functionality is complete and well-documented. Remaining work is primarily integration with external systems (wlroots) and a Sunshine/Moonlight metrics policy/implementation decision.
 

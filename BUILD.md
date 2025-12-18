@@ -2,60 +2,42 @@
 
 ## Prerequisites
 
-- C compiler (GCC or Clang)
-- Rust toolchain (for input_predictor)
-- Python 3 (for configuration and profiles)
-- System dependencies:
-  - `waypipe` (system-installed)
+- C compiler (GCC or Clang) + `make`
+- Build-time system deps (required for default `make`):
+  - `pkg-config`
   - `json-c` development headers
-  - `libwayland` development headers (for compositor integration)
+- Runtime system deps (required to run Lunar Telescope as intended):
+  - `waypipe`
+  - `sunshine`
+  - `moonlight`
+
+See `docs/DEPENDENCIES.md` for the tiered dependency policy and the explicit “escape hatch” flags (`WITH_JSONC=0`, `ALLOW_INCOMPLETE_RUNTIME=1`).
 
 ## Building
 
-### Core C Modules
+### Build everything (default)
 
 ```bash
-cd core
-gcc -c -fPIC -o schema.o schema.c -I. $(pkg-config --cflags json-c)
-gcc -c -fPIC -o profiles.o profiles.c -I.
-gcc -c -fPIC -o telescope.o telescope.c -I.
-gcc -c -fPIC -o metrics.o metrics.c -I.
+make
 ```
 
-### Input Modules
+### Build without json-c (disables JSON config parsing)
 
 ```bash
-cd input
-gcc -c -fPIC -o input_proxy.o input_proxy.c -I. -I../core
-gcc -c -fPIC -o scroll_smoother.o scroll_smoother.c -I. -I../core -lm
-gcc -c -fPIC -o reconciliation.o reconciliation.c -I. -I../core
+make WITH_JSONC=0
 ```
 
-### Rust Input Predictor
-
-```bash
-cd rust/input_predictor
-cargo build --release
-```
-
-### Compositor Stubs
-
-```bash
-cd compositor
-gcc -c -fPIC -o wl_input.o wl_input.c -I. -I../core -I../input
-gcc -c -fPIC -o wl_surface.o wl_surface.c -I. -I../core
-```
+**Note:** When built with `WITH_JSONC=0`, `telescope_config_load()` will return `-ENOTSUP`.
 
 ### Running Tests
 
 ```bash
-cd tests
 make test
 ```
 
 ## Integration Notes
 
-- All upstream components (waypipe, sunshine, moonlight) must be system-installed
-- No vendored dependencies are used
-- Rust module is compiled as a C-compatible shared library
+- All upstream components (waypipe, sunshine, moonlight) are **system-installed** (no vendoring / no auto-fetch)
+- No vendored dependencies are used (see `docs/design-constraints-policy.md` and `docs/UPSTREAM_DEPENDENCIES.md`)
+- Use `make check-runtime` to verify runtime dependencies on a machine
 

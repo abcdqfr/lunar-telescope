@@ -1,5 +1,3 @@
-#define _POSIX_C_SOURCE 200809L
-#define _XOPEN_SOURCE 500
 #include "lens.h"
 #include "../core/telescope.h"
 #include <stdio.h>
@@ -10,6 +8,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <time.h>
+#include <fcntl.h>
 
 /**
  * Sunshine lens implementation
@@ -161,15 +160,31 @@ static int sunshine_start(struct lens_session *session) {
     if (ret < 0) {
         return ret;
     }
-    
+
+    /* Exec handshake: detect execvp() failure reliably (missing binary, etc.) */
+    int exec_pipe[2];
+    if (pipe(exec_pipe) != 0) {
+        free_sunshine_argv(sunshine_argv, sunshine_argc);
+        return -errno;
+    }
+    if (fcntl(exec_pipe[1], F_SETFD, FD_CLOEXEC) != 0) {
+        close(exec_pipe[0]);
+        close(exec_pipe[1]);
+        free_sunshine_argv(sunshine_argv, sunshine_argc);
+        return -errno;
+    }
+
     pid_t pid = fork();
     if (pid < 0) {
+        close(exec_pipe[0]);
+        close(exec_pipe[1]);
         free_sunshine_argv(sunshine_argv, sunshine_argc);
         return -errno;
     }
     
     if (pid == 0) {
         /* Child: exec sunshine client */
+        close(exec_pipe[0]); /* child writes */
         if (ss->config->application.env_count > 0) {
             for (size_t i = 0; i < ss->config->application.env_count; i++) {
                 putenv(ss->config->application.env[i]);
@@ -183,13 +198,29 @@ static int sunshine_start(struct lens_session *session) {
         }
         
         execvp("sunshine", sunshine_argv);
+        int err = errno;
+        ssize_t _ignored = write(exec_pipe[1], &err, sizeof(err));
+        (void)_ignored;
         _exit(127);
     }
-    
+
+    close(exec_pipe[1]); /* parent reads */
+    free_sunshine_argv(sunshine_argv, sunshine_argc);
+
+    int child_errno = 0;
+    ssize_t n;
+    do {
+        n = read(exec_pipe[0], &child_errno, sizeof(child_errno));
+    } while (n < 0 && errno == EINTR);
+    close(exec_pipe[0]);
+
+    if (n > 0) {
+        (void)waitpid(pid, NULL, 0);
+        return -child_errno;
+    }
+
     ss->sunshine_pid = pid;
     session->process_pid = pid;
-    
-    free_sunshine_argv(sunshine_argv, sunshine_argc);
     
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);

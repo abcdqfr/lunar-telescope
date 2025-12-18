@@ -1,4 +1,3 @@
-#define _POSIX_C_SOURCE 200809L
 #include "compositor.h"
 #include "../input/input.h"
 #include <stdlib.h>
@@ -135,9 +134,9 @@ int compositor_notify_frame_presented(struct wl_surface *surface,
     metrics_record_frame(latency_ms, dropped);
     
     /* Trigger input reconciliation for this frame */
-    extern struct input_proxy *g_global_input_proxy;
-    if (g_global_input_proxy) {
-        input_proxy_reconcile(g_global_input_proxy, frame_id, NULL);
+    struct input_proxy *proxy = compositor_get_global_input_proxy();
+    if (proxy) {
+        input_proxy_reconcile(proxy, frame_id, NULL);
     }
     
     return 0;

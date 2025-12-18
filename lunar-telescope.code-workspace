@@ -1,0 +1,171 @@
+{
+  "folders": [
+    {
+      "name": "lunar-telescope",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.eol": "\n",
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "editor.formatOnSave": true,
+    "editor.rulers": [100],
+    "editor.renderWhitespace": "boundary",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    },
+
+    "search.exclude": {
+      "**/build/**": true,
+      "**/target/**": true,
+      "**/.git/**": true,
+      "**/.nix*/**": true
+    },
+    "files.exclude": {
+      "**/build": true,
+      "**/target": true
+    },
+
+    "files.associations": {
+      "Makefile": "makefile",
+      "*.mk": "makefile",
+      "*.h": "c",
+      "*.c": "c"
+    },
+
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "clangd.onConfigChanged": "restart",
+    "clangd.arguments": [
+      "--background-index",
+      "--clang-tidy",
+      "--header-insertion=never",
+      "--completion-style=detailed",
+      "--fallback-style=LLVM",
+      "--all-scopes-completion",
+      "--function-arg-placeholders",
+      "--pch-storage=memory",
+      "--query-driver=**"
+    ],
+
+    "shellcheck.enable": true,
+    "[shellscript]": {
+      "editor.defaultFormatter": "foxundermoon.shell-format"
+    },
+
+    "json.schemaDownload.enable": true,
+    "yaml.schemaStore.enable": true,
+
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.scrollback": 20000
+  },
+  "extensions": {
+    "recommendations": [
+      "llvm-vs-code-extensions.vscode-clangd",
+      "ms-vscode.makefile-tools",
+      "vadimcn.vscode-lldb",
+      "mkhl.shfmt",
+      "foxundermoon.shell-format",
+      "timonwong.shellcheck",
+      "redhat.vscode-yaml",
+      "ms-azuretools.vscode-docker",
+      "editorconfig.editorconfig",
+      "streetsidesoftware.code-spell-checker",
+      "eamodio.gitlens"
+    ],
+    "unwantedRecommendations": [
+      "ms-vscode.cpptools"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "make: all (default)",
+        "type": "shell",
+        "command": "make",
+        "group": "build",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
+        "label": "make: all (no json-c) [portable]",
+        "type": "shell",
+        "command": "make WITH_JSONC=0 -j",
+        "args": ["${command:makefile.numJobs}"],
+        "group": "build",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
+        "label": "make: test",
+        "type": "shell",
+        "command": "make",
+        "args": ["test"],
+        "group": "test",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
+        "label": "make: test (no json-c) [portable]",
+        "type": "shell",
+        "command": "make",
+        "args": ["WITH_JSONC=0", "test"],
+        "group": "test",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
+        "label": "make: check-runtime (waypipe/sunshine/moonlight)",
+        "type": "shell",
+        "command": "make",
+        "args": ["check-runtime"],
+        "group": "test",
+        "problemMatcher": [],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
+        "label": "make: clean",
+        "type": "shell",
+        "command": "make",
+        "args": ["clean"],
+        "group": "build",
+        "problemMatcher": [],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Debug: tests/test_input (gdb)",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/tests/test_input",
+        "args": [],
+        "cwd": "${workspaceFolder}/tests",
+        "stopAtEntry": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "/usr/bin/gdb",
+        "preLaunchTask": "make: test (no json-c) [portable]"
+      },
+      {
+        "name": "Debug: tests/test_schema (gdb)",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/tests/test_schema",
+        "args": [],
+        "cwd": "${workspaceFolder}/tests",
+        "stopAtEntry": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "/usr/bin/gdb",
+        "preLaunchTask": "make: test"
+      }
+    ]
+  }
+}
+
+

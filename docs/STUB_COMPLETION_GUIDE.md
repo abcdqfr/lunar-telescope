@@ -1,6 +1,6 @@
 # Stub Completion Guide
 
-**Generated:** Wed Dec 17 12:54:21 PM CST 2025  
+**Generated:** Wed Dec 17 12:54:21 PM CST 2025
 **Purpose:** Clarify what's needed to complete remaining stubs
 
 ---
@@ -14,13 +14,7 @@
 4. **Compositor Framework** - All event processing, prediction, reconciliation complete
 
 ### ⏳ **INTENTIONAL STUBS** (Working as designed)
-1. **Rust Predictor Stub** (`input/rust_predictor_stub.c`)
-   - **Status:** ✅ Complete as fallback mechanism
-   - **Purpose:** Graceful degradation when Rust library unavailable
-   - **Completion:** Already complete - returns NULL to trigger C fallback
-   - **No action needed** - This is the intended behavior
-
-2. **wlroots Stub Fallback** (`compositor/wlroots_glue.c` lines 271-288)
+1. **wlroots Stub Fallback** (`compositor/wlroots_glue.c` lines 271-288)
    - **Status:** ✅ Complete fallback implementation
    - **Purpose:** Graceful degradation when wlroots unavailable
    - **Completion:** Already complete - returns -ENOTSUP
@@ -29,8 +23,8 @@
 ### 🔨 **REMAINING STUBS** (Need implementation)
 
 #### 1. Sunshine Lens Adapter (`lenses/lens_sunshine.c`)
-**Status:** Complete stub - needs implementation  
-**Priority:** Low (optional transport)
+**Status:** Implemented (fork/exec + exec handshake); metrics are placeholder
+**Priority:** High (required runtime upstream)
 
 **What's Needed:**
 - **Clarification Required:**
@@ -50,8 +44,8 @@
 ---
 
 #### 2. Moonlight Lens Adapter (`lenses/lens_moonlight.c`)
-**Status:** Complete stub - needs implementation  
-**Priority:** Low (optional transport)
+**Status:** Implemented (fork/exec + exec handshake); metrics are placeholder
+**Priority:** High (required runtime upstream)
 
 **What's Needed:**
 - **Clarification Required:**
@@ -71,7 +65,7 @@
 ---
 
 #### 3. Compositor TODOs (Reference Updates Needed)
-**Status:** Framework complete, TODOs are outdated comments  
+**Status:** Framework complete, TODOs are outdated comments
 **Priority:** Documentation cleanup
 
 **Current State:**
@@ -244,5 +238,5 @@
 
 ---
 
-**Status:** Framework is 100% complete. Remaining stubs are optional transports (Sunshine/Moonlight) that need API research, and documentation cleanup (TODO comment updates).
+**Status:** Framework is 100% complete. Remaining work is mainly Sunshine/Moonlight metrics policy/implementation and documentation cleanup (TODO comment updates).
 

@@ -1,24 +1,6 @@
 # Lunar Telescope Scripts
 
-## waypipe-connect-smart.sh
+This directory is intentionally minimal.
 
-Smart connection orchestration script for Waypipe-based remote applications.
-
-### Usage
-
-```bash
-./waypipe-connect-smart.sh <config.json> [--profile <name>] [--dry-run] [--verbose]
-```
-
-### Options
-
-- `--profile <name>`: Override performance profile (low-latency, balanced, high-quality, bandwidth-constrained)
-- `--dry-run`: Validate configuration and show commands without executing
-- `--verbose`: Enable verbose logging
-
-### Example
-
-```bash
-./waypipe-connect-smart.sh config.json --profile low-latency
-```
+Historically this repo included a Python-assisted “smart connect” script. It was removed to keep the project **C-only** (no Python, no Rust) and reduce deployment/toolchain surface area.
 

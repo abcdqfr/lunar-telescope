@@ -20,6 +20,17 @@ extern "C" {
 struct wl_input_device;
 struct wl_surface;
 struct wl_seat;
+struct input_proxy;
+
+/**
+ * Get the global input proxy used by compositor hooks (if initialized).
+ *
+ * This keeps cross-module coupling out of global variables while still
+ * allowing surface tracking to trigger reconciliation.
+ *
+ * @return Input proxy pointer or NULL if not initialized
+ */
+struct input_proxy *compositor_get_global_input_proxy(void);
 
 /**
  * Input device types

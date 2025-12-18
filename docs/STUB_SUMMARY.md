@@ -15,14 +15,7 @@
 
 ## ✅ Intentional Stubs (Complete - No Action Needed)
 
-### 1. Rust Predictor Stub (`input/rust_predictor_stub.c`)
-**Status:** ✅ **Complete and Working**
-- **Purpose:** Graceful fallback when Rust library unavailable
-- **Behavior:** Returns NULL/error codes, triggers C fallback
-- **Completion:** Already complete - this is the intended design
-- **Action:** None needed
-
-### 2. wlroots Stub Fallback (`compositor/wlroots_glue.c:271-288`)
+### 1. wlroots Stub Fallback (`compositor/wlroots_glue.c:271-288`)
 **Status:** ✅ **Complete and Working**
 - **Purpose:** Graceful degradation when wlroots unavailable
 - **Behavior:** Returns -ENOTSUP when compiled without wlroots
@@ -188,7 +181,7 @@ Update comments to:
 ### Immediate (No Blocking):
 
 1. ✅ **Update Compositor Comments** - Reference `wlroots_glue.c` implementations
-2. ✅ **Document Sunshine/Moonlight Requirements** - Create research doc when needed
+2. ✅ **Document Sunshine/Moonlight Requirements** - Documented as required runtime upstreams (see `docs/DEPENDENCIES.md`)
 
 ### When Needed:
 
@@ -208,16 +201,16 @@ Update comments to:
 - ✅ **Waypipe Integration:** 100% Complete
 - ✅ **Input Prediction:** 100% Complete
 - ✅ **Compositor Integration:** 100% Complete (wlroots glue ready)
-- ⏳ **Sunshine Lens:** 0% (needs API research)
-- ⏳ **Moonlight Lens:** 0% (needs API research)
+- ✅ **Sunshine Lens:** Implemented (fork/exec + exec handshake); metrics are placeholder
+- ✅ **Moonlight Lens:** Implemented (fork/exec + exec handshake); metrics are placeholder
 - 📝 **Documentation:** 95% (TODO comment cleanup)
 
-**Overall:** Framework is production-ready. Remaining stubs are optional transports that can be implemented when needed.
+**Overall:** Framework is production-ready. Remaining work is primarily metrics policy/implementation details and compositor integration work on real wlroots systems.
 
 ---
 
 **Next Steps:**
-1. Research Sunshine/Moonlight client APIs when transport is needed
+1. Decide Sunshine/Moonlight metrics policy (implement vs explicitly unsupported)
 2. Update compositor TODO comments (documentation)
-3. Implement Sunshine/Moonlight following waypipe pattern
+3. Add real Sunshine/Moonlight metrics collection (if supported)
 

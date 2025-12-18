@@ -84,6 +84,8 @@ static int parse_application(json_object *obj, telescope_application_t *app) {
     
     if (json_object_object_get_ex(obj, "env", &env_obj)) {
         json_object_object_foreach(env_obj, key, val) {
+            (void)key;
+            (void)val;
             app->env_count++;
         }
         

@@ -183,6 +183,15 @@
         "options": { "cwd": "${workspaceFolder}" }
       },
       {
+        "label": "gh: create PR (self-PR flow)",
+        "type": "shell",
+        "command": "make",
+        "args": ["pr"],
+        "group": "test",
+        "problemMatcher": [],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
         "label": "make: clean",
         "type": "shell",
         "command": "make",

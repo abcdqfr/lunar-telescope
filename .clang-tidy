@@ -1,0 +1,17 @@
+---
+# Lunar Telescope (C-first) clang-tidy config
+#
+# Policy:
+# - Keep this initially focused on correctness and hard bugs (clang-analyzer, bugprone).
+# - Expand toward style/perf gradually as coverage and tests mature.
+Checks: >
+  -*,
+  clang-analyzer-*,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling
+
+# We treat enabled checks as gating (errors) in CI/preflight.
+WarningsAsErrors: '*'
+
+HeaderFilterRegex: '^(core|input|compositor|lenses)/.*'
+...
+

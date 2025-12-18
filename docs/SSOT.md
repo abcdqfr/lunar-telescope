@@ -72,12 +72,24 @@ This is how we avoid long-lived divergent branches while still serving constrain
 
 - **Preflight before pushing**
   - Policy: run CI-equivalent checks locally before pushing to avoid public CI churn.
-  - PR route reality: we enforce baseline always, and CI-equivalent when the toolchain exists.
+  - We enforce **strict local-first** checks (>= CI) via Nix.
   - The pre-push hook runs:
-    - `make preflight-baseline` (always)
-    - `make preflight-ci` (only if python3+cargo+pkg-config exist)
+    - `make preflight-baseline` (always, gcc, -Werror)
+    - `make preflight-strict` (via `nix develop -c …`):
+      - CI-equivalent build+tests (gcc, -Werror)
+      - C sanitizers (clang ASan+UBSan)
+      - clang-tidy analyzer gate
+      - C coverage gate
   - Hooks are auto-installed on the first `make` run (`make hooks-install`), unless `CI=true`.
   - **No-bypass policy**: bypassing verification is considered a violation of project policy. Enforce with GitHub branch protection (PRs + required checks).
+
+- **Coverage ratchet (C is the meat)**
+  - Current CI gate: **25% line coverage** (measured via `gcovr`).
+  - Policy: ratchet upward by **+2% per week** (or per meaningful test PR) until we’re in a healthy range.
+  - Priority order for new tests:
+    1. `core/` + `input/` (high-signal logic, easiest to unit test)
+    2. `compositor/` (needs harness/mocks)
+    3. `lenses/` (needs fake lens exec/harness; real binaries are external)
 
 - **PR-only trunk**
   - Protect `main` with GitHub branch protection:

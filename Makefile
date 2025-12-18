@@ -7,13 +7,29 @@
 # - Lens adapters
 # - Tests
 
-.PHONY: all clean install uninstall test help core input compositor lenses check-deps check-deps-jsonc check-runtime doctor hooks-install hooks-uninstall preflight preflight-ci preflight-baseline preflight-rust preflight-format coverage coverage-report preflight-strict pr pr-create pr-open pr-status
+.PHONY: all clean install uninstall test help core input compositor lenses check-deps check-deps-jsonc check-runtime doctor hooks-install hooks-uninstall preflight preflight-ci preflight-baseline preflight-rust preflight-format coverage coverage-report preflight-strict preflight-sanitize preflight-tidy pr pr-create pr-open pr-status
 .DEFAULT_GOAL := all
 
 # Configuration
-CC = gcc
+CC ?= gcc
 RUSTC ?= cargo
 FEATURE_MACROS = -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700
+
+# Strictness toggles
+WERROR ?= 0
+WERROR_CFLAGS :=
+ifeq ($(WERROR),1)
+WERROR_CFLAGS += -Werror
+endif
+
+SANITIZE ?= 0
+SANITIZE_KIND ?= address,undefined
+SANITIZE_CFLAGS :=
+SANITIZE_LDFLAGS :=
+ifeq ($(SANITIZE),1)
+SANITIZE_CFLAGS += -O1 -fno-omit-frame-pointer -fsanitize=$(SANITIZE_KIND) -fno-sanitize-recover=all
+SANITIZE_LDFLAGS += -fsanitize=$(SANITIZE_KIND)
+endif
 COVERAGE ?= 0
 COVERAGE_CFLAGS :=
 COVERAGE_LDFLAGS :=
@@ -23,7 +39,8 @@ COVERAGE_LDFLAGS += --coverage
 endif
 
 CFLAGS = -Wall -Wextra -g -std=c11 -fPIC $(FEATURE_MACROS) $(COVERAGE_CFLAGS)
-LDFLAGS = -lm $(COVERAGE_LDFLAGS)
+CFLAGS += $(WERROR_CFLAGS) $(SANITIZE_CFLAGS)
+LDFLAGS = -lm $(COVERAGE_LDFLAGS) $(SANITIZE_LDFLAGS)
 INCLUDES = -I. -Icore -Iinput -Icompositor -Ilenses
 
 # Hybrid build options
@@ -124,6 +141,8 @@ help:
 	@echo "  preflight-ci - Mirror CI checks locally (requires: json-c dev, python3; rust optional)"
 	@echo "  preflight-baseline - Baseline build+tests (WITH_RUST=0 WITH_JSONC=0)"
 	@echo "  preflight-strict - Stricter-than-CI local checks (includes C coverage)"
+	@echo "  preflight-sanitize - C sanitizers (ASan+UBSan) build+tests (clang)"
+	@echo "  preflight-tidy - clang-tidy (changed C files vs base ref)"
 	@echo "  coverage     - Generate C coverage report (gcovr) and enforce minimum threshold"
 	@echo "  core         - Build core C modules"
 	@echo "  input        - Build input prediction modules"
@@ -213,15 +232,59 @@ doctor: check-deps check-runtime
 preflight: preflight-baseline preflight-ci preflight-format
 
 # Local strict preflight (must be >= CI)
-preflight-strict: preflight-baseline preflight-ci coverage preflight-format preflight-rust
+preflight-strict: preflight-baseline preflight-ci preflight-sanitize preflight-tidy coverage preflight-format preflight-rust
 	@echo "OK: preflight-strict"
+
+# Sanitizers (C): address+undefined behavior sanitizers.
+preflight-sanitize:
+	@echo "== preflight-sanitize: ASan+UBSan (C) =="
+	@if ! command -v clang >/dev/null 2>&1; then \
+		echo "Error: clang not found (required for sanitizers). Use nix develop or install clang."; \
+		exit 1; \
+	fi
+	@$(MAKE) clean >/dev/null
+	@$(MAKE) -j$$(nproc) CC=clang WITH_RUST=0 WITH_JSONC=1 SANITIZE=1 WERROR=1 all >/dev/null
+	@$(MAKE) -C tests test CC=clang WITH_JSONC=1 WITH_PYTHON=0 SANITIZE=1 WERROR=1 >/dev/null
+	@echo "OK: sanitizers"
+
+# clang-tidy on changed C sources (relative to base ref).
+TIDY_BASE_REF ?= origin/main
+TIDY_ALL ?= 0
+preflight-tidy:
+	@echo "== preflight-tidy: clang-tidy (changed files) =="
+	@if ! command -v clang-tidy >/dev/null 2>&1; then \
+		echo "Error: clang-tidy not found. Use nix develop or install clang-tools/clang-tidy."; \
+		exit 1; \
+	fi
+	@base_ref="$(TIDY_BASE_REF)"; \
+	files=""; \
+	if [ "$(TIDY_ALL)" = "1" ]; then \
+		files=$$(find core input compositor lenses -name '*.c' -print 2>/dev/null || true); \
+	elif git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git rev-parse --verify "$$base_ref" >/dev/null 2>&1; then \
+		files=$$(git diff --name-only --diff-filter=ACMR "$$base_ref"...HEAD -- '*.c' || true); \
+	elif git rev-parse --is-inside-work-tree >/dev/null 2>&1; then \
+		files=$$(git diff --name-only --diff-filter=ACMR -- '*.c' || true); \
+	fi; \
+	if [ -z "$$files" ]; then \
+		echo "SKIP: clang-tidy (no target .c detected; set TIDY_ALL=1 or TIDY_BASE_REF=origin/main)"; \
+		exit 0; \
+	fi; \
+	extra=""; \
+	if command -v pkg-config >/dev/null 2>&1 && pkg-config --exists json-c >/dev/null 2>&1; then \
+		extra="$$(pkg-config --cflags json-c)"; \
+	fi; \
+	nix_inc=""; \
+	if [ -n "$${LT_NIX_GLIBC_INCLUDE:-}" ]; then nix_inc="$$nix_inc -isystem $${LT_NIX_GLIBC_INCLUDE}"; fi; \
+	if [ -n "$${NIX_CFLAGS_COMPILE:-}" ]; then nix_inc="$$nix_inc $${NIX_CFLAGS_COMPILE}"; fi; \
+	echo "$$files" | xargs -I{} clang-tidy -quiet -warnings-as-errors='*' {} -- \
+		$(FEATURE_MACROS) -std=c11 -DLT_HAVE_JSONC=1 $(INCLUDES) $$extra $$nix_inc
 
 # Baseline contract check (this must always work)
 preflight-baseline:
 	@echo "== preflight-baseline: C-only baseline build+tests =="
 	@$(MAKE) clean >/dev/null
-	@$(MAKE) -j$$(nproc) WITH_RUST=0 WITH_JSONC=0 >/dev/null
-	@$(MAKE) WITH_JSONC=0 test >/dev/null
+	@$(MAKE) -j$$(nproc) CC=gcc WITH_RUST=0 WITH_JSONC=0 WERROR=1 >/dev/null
+	@$(MAKE) CC=gcc WITH_JSONC=0 WERROR=1 test >/dev/null
 	@echo "OK: baseline build+tests"
 
 # Mirror CI job logic locally (as close as possible)
@@ -236,8 +299,8 @@ preflight-ci:
 		exit 1; \
 	fi
 	@$(MAKE) clean >/dev/null
-	@$(MAKE) -j$$(nproc) all WITH_RUST=1 WITH_JSONC=1 >/dev/null
-	@$(MAKE) -C tests test WITH_JSONC=1 WITH_PYTHON=1 >/dev/null
+	@$(MAKE) -j$$(nproc) CC=gcc all WITH_RUST=1 WITH_JSONC=1 WERROR=1 >/dev/null
+	@$(MAKE) -C tests test CC=gcc WITH_JSONC=1 WITH_PYTHON=1 WERROR=1 >/dev/null
 	@echo "OK: CI-equivalent build+tests"
 
 # Optional Rust checks (only if cargo exists)
@@ -277,7 +340,7 @@ preflight-format:
 #
 # NOTE: This uses the existing build/obj layout so coverage data is stable.
 # Requires: gcovr, and a build/test run with COVERAGE=1.
-COVERAGE_MIN ?= 20
+COVERAGE_MIN ?= 25
 GCOVR ?= gcovr
 COVERAGE_DIR ?= build/coverage
 COVERAGE_XML := $(COVERAGE_DIR)/coverage.xml
@@ -290,8 +353,8 @@ coverage:
 		exit 1; \
 	fi
 	@$(MAKE) clean >/dev/null
-	@$(MAKE) -j$$(nproc) WITH_RUST=0 WITH_JSONC=1 COVERAGE=1 all >/dev/null
-	@$(MAKE) -C tests test WITH_JSONC=1 WITH_PYTHON=0 >/dev/null
+	@$(MAKE) -j$$(nproc) CC=gcc WITH_RUST=0 WITH_JSONC=1 COVERAGE=1 WERROR=1 all >/dev/null
+	@$(MAKE) -C tests test CC=gcc WITH_JSONC=1 WITH_PYTHON=0 >/dev/null
 	@mkdir -p "$(COVERAGE_DIR)"
 	@$(GCOVR) -r . \
 		--object-directory build/obj \

@@ -34,6 +34,7 @@
 
               # Local-first strict tooling (IDE/CI parity)
               gcovr
+              clang
               clang-tools # clang-format/clang-tidy
               cppcheck
               shellcheck
@@ -46,6 +47,8 @@
             shellHook = ''
               # Ensure pkg-config can find json-c (its .pc lives in the dev output).
               export PKG_CONFIG_PATH="${pkgs.json_c.dev}/lib/pkgconfig''${PKG_CONFIG_PATH:+:}$PKG_CONFIG_PATH"
+              # Make system headers discoverable for tools like clang-tidy in environments without /usr/include.
+              export LT_NIX_GLIBC_INCLUDE="${pkgs.glibc.dev}/include"
 
               echo "Lunar Telescope devshell ready."
               echo "  - Recommended: make preflight-ci WITH_RUST=1 WITH_JSONC=1"

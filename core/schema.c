@@ -64,6 +64,12 @@ static int parse_application(json_object *obj, telescope_application_t *app) {
     json_object *tmp;
     json_object *args_array;
     json_object *env_obj;
+
+    /* Ensure counters/pointers are initialized even if the caller didn't zero-init. */
+    app->args = NULL;
+    app->args_count = 0;
+    app->env = NULL;
+    app->env_count = 0;
     
     if (!json_object_object_get_ex(obj, "executable", &tmp)) {
         return -1;
@@ -86,23 +92,32 @@ static int parse_application(json_object *obj, telescope_application_t *app) {
     }
     
     if (json_object_object_get_ex(obj, "env", &env_obj)) {
-        json_object_object_foreach(env_obj, key, val) {
-            (void)key;
-            (void)val;
-            app->env_count++;
-        }
-        
-        if (app->env_count > 0) {
-            app->env = calloc(app->env_count + 1, sizeof(char*));
+        /* Prefer the json-c native length API (avoids double-iteration surprises and analyzer false positives). */
+        size_t count = json_object_object_length(env_obj);
+        if (count > 0) {
+            app->env = calloc(count + 1, sizeof(char *));
             size_t idx = 0;
             json_object_object_foreach(env_obj, key, val) {
+                if (idx >= count) {
+                    break; /* defensive: should not happen */
+                }
+                const char *val_str = json_object_get_string(val);
+                if (!val_str) {
+                    val_str = "";
+                }
                 size_t key_len = strlen(key);
-                size_t val_len = strlen(json_object_get_string(val));
+                size_t val_len = strlen(val_str);
                 app->env[idx] = malloc(key_len + val_len + 2);
-                snprintf(app->env[idx], key_len + val_len + 2, "%s=%s", key, json_object_get_string(val));
-                idx++;
+                if (app->env[idx]) {
+                    snprintf(app->env[idx], key_len + val_len + 2, "%s=%s", key, val_str);
+                    idx++;
+                }
             }
-            app->env[app->env_count] = NULL;
+            app->env[idx] = NULL;
+            app->env_count = idx;
+        } else {
+            app->env = NULL;
+            app->env_count = 0;
         }
     } else {
         app->env = NULL;

@@ -144,13 +144,13 @@ int input_proxy_process(struct input_proxy *proxy,
                                     event->scroll.dx, event->scroll.dy,
                                     event->scroll.discrete,
                                     &smoothed_dx, &smoothed_dy) == 0) {
-            /* Create smoothed event */
-            struct input_event *smoothed = malloc(sizeof(struct input_event));
-            if (smoothed) {
-                *smoothed = *event;
-                smoothed->scroll.dx = smoothed_dx;
-                smoothed->scroll.dy = smoothed_dy;
-                if (predicted_out) {
+            /* Only allocate an output event if the caller requested one. */
+            if (predicted_out) {
+                struct input_event *smoothed = malloc(sizeof(struct input_event));
+                if (smoothed) {
+                    *smoothed = *event;
+                    smoothed->scroll.dx = smoothed_dx;
+                    smoothed->scroll.dy = smoothed_dy;
                     *predicted_out = smoothed;
                 }
             }

@@ -20,6 +20,8 @@ jobs:
         sudo apt-get install -y \
           build-essential \
           gcc \
+          clang \
+          clang-tidy \
           libjson-c-dev \
           pkg-config \
           python3 \
@@ -39,7 +41,15 @@ jobs:
 
     - name: Coverage (C)
       run: |
-        make coverage COVERAGE_MIN=20
+        make coverage COVERAGE_MIN=25
+
+    - name: C sanitizers (ASan+UBSan)
+      run: |
+        make preflight-sanitize
+
+    - name: clang-tidy (C analyzer)
+      run: |
+        make preflight-tidy TIDY_ALL=1
     
     - name: Check code formatting (C)
       run: |

@@ -39,6 +39,8 @@ ENV/
 
 # Test artifacts
 *.gcov
+*.gcov.json
+*.gcov.json.gz
 *.gcda
 *.gcno
 coverage/

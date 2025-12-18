@@ -46,7 +46,7 @@ endif
 all: $(TESTS)
 
 ifeq ($(WITH_JSONC),1)
-test_schema: ./test_schema.c $(CORE_DIR)/schema.c $(CORE_DIR)/profiles.c $(CORE_DIR)/telescope.c $(CORE_DIR)/metrics.c $(CORE_DIR)/logging.c $(CORE_DIR)/utils.c
+test_schema: ./test_schema.c $(CORE_DIR)/schema.c $(CORE_DIR)/profiles.c
 	@command -v pkg-config >/dev/null 2>&1 || { \
 		echo "Error: pkg-config not found (required for json-c)."; \
 		echo "Tip: run `make WITH_JSONC=0 test` to skip schema parsing tests."; \

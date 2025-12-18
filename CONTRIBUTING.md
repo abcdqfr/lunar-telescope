@@ -17,6 +17,15 @@ This repo runs a **PR-only** workflow on `main`.
 
 The pre-push hook runs baseline always and runs CI-preflight when the toolchain is present.
 
+## Nix devshell (recommended)
+
+To get a deterministic local toolchain matching CI, use:
+
+```bash
+nix develop
+make preflight-ci WITH_RUST=1 WITH_JSONC=1
+```
+
 ## Self-PR flow (GitHub CLI)
 
 This is the default workflow for maintainers too:

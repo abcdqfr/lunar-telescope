@@ -178,6 +178,8 @@ else
 	@touch "$(RUST_STAMP)"
 endif
 
+$(RUST_LIB): $(RUST_STAMP)
+
 # Runtime checks (upstream transports are system-provided; we do not vendor/fetch them)
 check-runtime:
 	@missing=0; \
@@ -220,10 +222,7 @@ preflight-ci:
 		exit 1; \
 	fi
 	@$(MAKE) clean >/dev/null
-	@echo "Building Rust predictor (CI-equivalent)..."
-	@cd rust/input_predictor && $(RUSTC) build --release >/dev/null
-	@$(MAKE) -j$$(nproc) WITH_JSONC=1 core input compositor lenses >/dev/null
-	@$(MAKE) build/lib/liblunar_telescope.a >/dev/null
+	@$(MAKE) -j$$(nproc) all WITH_RUST=1 WITH_JSONC=1 >/dev/null
 	@$(MAKE) -C tests test WITH_JSONC=1 WITH_PYTHON=1 >/dev/null
 	@echo "OK: CI-equivalent build+tests"
 

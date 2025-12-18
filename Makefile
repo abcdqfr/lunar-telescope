@@ -208,7 +208,17 @@ preflight-baseline:
 # Mirror CI job logic locally (as close as possible)
 preflight-ci:
 	@echo "== preflight-ci: mirror GitHub Actions Build and Test =="
+	@if ! command -v python3 >/dev/null 2>&1; then \
+		echo "Error: python3 is required for preflight-ci (mirrors CI)."; \
+		exit 1; \
+	fi
+	@if ! command -v $(RUSTC) >/dev/null 2>&1; then \
+		echo "Error: cargo is required for preflight-ci (mirrors CI Rust build step)."; \
+		exit 1; \
+	fi
 	@$(MAKE) clean >/dev/null
+	@echo "Building Rust predictor (CI-equivalent)..."
+	@cd rust/input_predictor && $(RUSTC) build --release >/dev/null
 	@$(MAKE) -j$$(nproc) WITH_JSONC=1 core input compositor lenses >/dev/null
 	@$(MAKE) build/lib/liblunar_telescope.a >/dev/null
 	@$(MAKE) -C tests test WITH_JSONC=1 WITH_PYTHON=1 >/dev/null

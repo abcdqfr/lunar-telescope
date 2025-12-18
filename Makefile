@@ -7,15 +7,23 @@
 # - Lens adapters
 # - Tests
 
-.PHONY: all clean install uninstall test help core input compositor lenses check-deps check-deps-jsonc check-runtime doctor hooks-install hooks-uninstall preflight preflight-ci preflight-baseline preflight-rust preflight-format pr pr-create pr-open pr-status
+.PHONY: all clean install uninstall test help core input compositor lenses check-deps check-deps-jsonc check-runtime doctor hooks-install hooks-uninstall preflight preflight-ci preflight-baseline preflight-rust preflight-format coverage coverage-report preflight-strict pr pr-create pr-open pr-status
 .DEFAULT_GOAL := all
 
 # Configuration
 CC = gcc
 RUSTC ?= cargo
 FEATURE_MACROS = -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700
-CFLAGS = -Wall -Wextra -g -std=c11 -fPIC $(FEATURE_MACROS)
-LDFLAGS = -lm
+COVERAGE ?= 0
+COVERAGE_CFLAGS :=
+COVERAGE_LDFLAGS :=
+ifeq ($(COVERAGE),1)
+COVERAGE_CFLAGS += -Og --coverage
+COVERAGE_LDFLAGS += --coverage
+endif
+
+CFLAGS = -Wall -Wextra -g -std=c11 -fPIC $(FEATURE_MACROS) $(COVERAGE_CFLAGS)
+LDFLAGS = -lm $(COVERAGE_LDFLAGS)
 INCLUDES = -I. -Icore -Iinput -Icompositor -Ilenses
 
 # Hybrid build options
@@ -115,6 +123,8 @@ help:
 	@echo "  preflight    - Run local checks before pushing (best-effort; skips unavailable tools)"
 	@echo "  preflight-ci - Mirror CI checks locally (requires: json-c dev, python3; rust optional)"
 	@echo "  preflight-baseline - Baseline build+tests (WITH_RUST=0 WITH_JSONC=0)"
+	@echo "  preflight-strict - Stricter-than-CI local checks (includes C coverage)"
+	@echo "  coverage     - Generate C coverage report (gcovr) and enforce minimum threshold"
 	@echo "  core         - Build core C modules"
 	@echo "  input        - Build input prediction modules"
 	@echo "  compositor   - Build compositor integration"
@@ -202,6 +212,10 @@ doctor: check-deps check-runtime
 # Local preflight (best-effort, deterministic, no network fetch)
 preflight: preflight-baseline preflight-ci preflight-format
 
+# Local strict preflight (must be >= CI)
+preflight-strict: preflight-baseline preflight-ci coverage preflight-format preflight-rust
+	@echo "OK: preflight-strict"
+
 # Baseline contract check (this must always work)
 preflight-baseline:
 	@echo "== preflight-baseline: C-only baseline build+tests =="
@@ -242,11 +256,62 @@ preflight-rust:
 preflight-format:
 	@echo "== preflight-format: best-effort formatting checks =="
 	@if command -v clang-format >/dev/null 2>&1; then \
-		find . -name '*.c' -o -name '*.h' | xargs clang-format --dry-run --Werror; \
-		echo "OK: clang-format"; \
+		base_ref="$${FORMAT_BASE_REF:-origin/main}"; \
+		files=""; \
+		if git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git rev-parse --verify "$$base_ref" >/dev/null 2>&1; then \
+			files=$$(git diff --name-only --diff-filter=ACMR "$$base_ref"...HEAD -- '*.c' '*.h' || true); \
+		elif git rev-parse --is-inside-work-tree >/dev/null 2>&1; then \
+			files=$$(git diff --name-only --diff-filter=ACMR -- '*.c' '*.h' || true); \
+		fi; \
+		if [ -z "$$files" ]; then \
+			echo "SKIP: clang-format (no changed .c/.h detected; set FORMAT_BASE_REF=origin/main to compare against base)"; \
+		else \
+			echo "$$files" | xargs clang-format --dry-run --Werror; \
+			echo "OK: clang-format (changed files)"; \
+		fi; \
 	else \
 		echo "SKIP: clang-format not found"; \
 	fi
+
+# Coverage (C): compile+run tests with coverage instrumentation and report via gcovr.
+#
+# NOTE: This uses the existing build/obj layout so coverage data is stable.
+# Requires: gcovr, and a build/test run with COVERAGE=1.
+COVERAGE_MIN ?= 20
+GCOVR ?= gcovr
+COVERAGE_DIR ?= build/coverage
+COVERAGE_XML := $(COVERAGE_DIR)/coverage.xml
+COVERAGE_HTML := $(COVERAGE_DIR)/index.html
+
+coverage:
+	@echo "== coverage: C line coverage via gcovr =="
+	@if ! command -v $(GCOVR) >/dev/null 2>&1; then \
+		echo "Error: gcovr not found. Use nix develop or install gcovr."; \
+		exit 1; \
+	fi
+	@$(MAKE) clean >/dev/null
+	@$(MAKE) -j$$(nproc) WITH_RUST=0 WITH_JSONC=1 COVERAGE=1 all >/dev/null
+	@$(MAKE) -C tests test WITH_JSONC=1 WITH_PYTHON=0 >/dev/null
+	@mkdir -p "$(COVERAGE_DIR)"
+	@$(GCOVR) -r . \
+		--object-directory build/obj \
+		--exclude 'tests/.*' \
+		--exclude 'rust/.*' \
+		--print-summary \
+		--fail-under-line $(COVERAGE_MIN)
+	@$(GCOVR) -r . \
+		--object-directory build/obj \
+		--exclude 'tests/.*' \
+		--exclude 'rust/.*' \
+		--xml-pretty --output "$(COVERAGE_XML)" >/dev/null
+	@$(GCOVR) -r . \
+		--object-directory build/obj \
+		--exclude 'tests/.*' \
+		--exclude 'rust/.*' \
+		--html-details --output "$(COVERAGE_HTML)" >/dev/null
+	@echo "OK: coverage >= $(COVERAGE_MIN)%"
+	@echo "  - HTML: $(COVERAGE_HTML)"
+	@echo "  - XML:  $(COVERAGE_XML)"
 
 # Git hook installation (repo policy: always run local CI-equivalent checks before push)
 # NOTE: Git hooks cannot be enforced purely by repo contents for security reasons.

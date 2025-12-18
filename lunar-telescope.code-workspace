@@ -192,6 +192,24 @@
         "options": { "cwd": "${workspaceFolder}" }
       },
       {
+        "label": "nix: preflight-strict (devshell)",
+        "type": "shell",
+        "command": "nix",
+        "args": ["develop", "-c", "make", "preflight-strict"],
+        "group": "test",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
+        "label": "nix: coverage (devshell)",
+        "type": "shell",
+        "command": "nix",
+        "args": ["develop", "-c", "make", "coverage"],
+        "group": "test",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
         "label": "gh: create PR (self-PR flow)",
         "type": "shell",
         "command": "make",

@@ -10,16 +10,24 @@ make hooks-install
 
 ## Hooks included
 
-- `pre-push`: runs `make preflight-ci` (CI-equivalent checks, deterministic, no network fetches)
+- `pre-push`: runs `make preflight-baseline` and then enforces `make preflight-strict`
+  (CI-equivalent checks + C coverage gate)
 
-## What preflight-ci requires
+## What preflight-strict requires
 
-To mirror the server-side CI job locally, you need:
+Recommended (deterministic): use Nix
+
+```bash
+nix develop -c make preflight-strict
+```
+
+Or install the toolchain equivalents:
 
 - `pkg-config`
 - `libjson-c-dev` (or equivalent json-c dev package)
 - `python3`
 - `cargo` (Rust toolchain)
+- `gcovr` (C coverage reporting)
 
 ## No-bypass policy
 

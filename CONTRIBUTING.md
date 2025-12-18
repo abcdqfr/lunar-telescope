@@ -12,10 +12,14 @@ This repo runs a **PR-only** workflow on `main`.
 
 - **Baseline contract** (must always pass):
   - `make preflight-baseline`
-- **CI-equivalent preflight** (recommended; mirrors GitHub Actions):
+- **CI-equivalent preflight** (mirrors GitHub Actions build+tests):
   - `make preflight-ci`
+- **Stricter-than-CI preflight** (required for pushes; includes C coverage gate):
+  - `make preflight-strict`
+- **Coverage only** (C-heavy signal; generates HTML + Cobertura XML):
+  - `make coverage`
 
-The pre-push hook runs baseline always and runs CI-preflight when the toolchain is present.
+The pre-push hook runs baseline always and enforces `preflight-strict` (recommended via Nix).
 
 ## Nix devshell (recommended)
 
@@ -23,7 +27,7 @@ To get a deterministic local toolchain matching CI, use:
 
 ```bash
 nix develop
-make preflight-ci WITH_RUST=1 WITH_JSONC=1
+make preflight-strict
 ```
 
 ## Self-PR flow (GitHub CLI)

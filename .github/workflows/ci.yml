@@ -27,10 +27,19 @@ jobs:
     
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
+
+    - name: Install gcovr (coverage)
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m pip install gcovr
     
     - name: Preflight (CI-equivalent)
       run: |
         make preflight-ci WITH_RUST=1 WITH_JSONC=1
+
+    - name: Coverage (C)
+      run: |
+        make coverage COVERAGE_MIN=20
     
     - name: Check code formatting (C)
       run: |

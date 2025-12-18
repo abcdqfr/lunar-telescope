@@ -33,6 +33,7 @@
               cargo
 
               # Local-first strict tooling (IDE/CI parity)
+              gcovr
               clang-tools # clang-format/clang-tidy
               cppcheck
               shellcheck

@@ -206,11 +206,31 @@ int input_proxy_process(struct input_proxy *proxy,
             struct pending_prediction *pending = malloc(sizeof(struct pending_prediction));
             if (pending) {
                 pending->frame_id = frame_id;
-                pending->predicted_event = predicted;
+                /*
+                 * Ownership rule:
+                 * - If caller requested predicted_out, the caller owns that returned event and may free it.
+                 *   We therefore store an internal copy for reconciliation.
+                 * - If caller did not request predicted_out, the proxy owns the predicted event and stores it directly.
+                 */
+                if (predicted_out) {
+                    pending->predicted_event = malloc(sizeof(struct input_event));
+                    if (pending->predicted_event) {
+                        *pending->predicted_event = *predicted;
+                    }
+                } else {
+                    pending->predicted_event = predicted;
+                    predicted = NULL; /* transferred to pending list */
+                }
                 pending->timestamp_us = now_us;
                 pending->next = proxy->pending_predictions;
                 proxy->pending_predictions = pending;
                 proxy->pending_count++;
+            } else {
+                /* If nobody will receive this predicted event, avoid leaking it. */
+                if (!predicted_out) {
+                    free(predicted);
+                    predicted = NULL;
+                }
             }
             
             if (predicted_out) {

@@ -105,7 +105,9 @@ void input_proxy_destroy(struct input_proxy *proxy);
  *
  * @param proxy Input proxy handle
  * @param event Input event
- * @param predicted_out Output predicted event (if prediction applied)
+ * @param predicted_out Output predicted event (if prediction applied).
+ *                      If non-NULL and prediction/smoothing produces an event, the caller owns the returned
+ *                      `struct input_event *` and must `free()` it.
  * @return 0 on success, negative error code on failure
  */
 int input_proxy_process(struct input_proxy *proxy,

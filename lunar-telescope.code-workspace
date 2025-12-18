@@ -165,6 +165,24 @@
         "options": { "cwd": "${workspaceFolder}" }
       },
       {
+        "label": "make: preflight (local)",
+        "type": "shell",
+        "command": "make",
+        "args": ["preflight"],
+        "group": "test",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
+        "label": "make: preflight-ci (mirror CI locally)",
+        "type": "shell",
+        "command": "make",
+        "args": ["preflight-ci"],
+        "group": "test",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
         "label": "make: clean",
         "type": "shell",
         "command": "make",

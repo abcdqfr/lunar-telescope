@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Lunar Telescope deterministic pre-push hook
+#
+# This prevents public CI spam by running local preflight checks before push.
+# It performs no network fetches and respects the hybrid contract:
+# - baseline must always pass
+# - optional tools are best-effort
+#
+# Enable with:
+#   git config core.hooksPath .githooks
+#
+# To bypass for an emergency:
+#   git push --no-verify
+
+echo "[pre-push] Running Lunar Telescope preflight..."
+make preflight
+echo "[pre-push] OK"
+
+

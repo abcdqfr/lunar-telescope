@@ -70,6 +70,12 @@ This is how we avoid long-lived divergent branches while still serving constrain
   - Keep upstream usage system-installed and license-aware (see `docs/UPSTREAM_DEPENDENCIES.md`).
   - Maintain `make check-runtime` as the canonical “doctor” for missing runtime components.
 
+- **Preflight before pushing**
+  - Run `make preflight` before pushing to avoid public CI churn.
+  - Optional: enable the pre-push hook:
+    - `git config core.hooksPath .githooks`
+    - This runs `make preflight` automatically (bypass with `git push --no-verify`).
+
 - **Lens metrics**
   - Decide whether Sunshine/Moonlight metrics should be:
     - implemented (how/where to query), or

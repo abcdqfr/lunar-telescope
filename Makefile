@@ -7,7 +7,7 @@
 # - Lens adapters
 # - Tests
 
-.PHONY: all clean install uninstall test help core input compositor lenses check-deps check-deps-jsonc check-runtime doctor
+.PHONY: all clean install uninstall test help core input compositor lenses check-deps check-deps-jsonc check-runtime doctor preflight preflight-ci preflight-baseline preflight-rust preflight-format
 .DEFAULT_GOAL := all
 
 # Configuration
@@ -107,6 +107,9 @@ help:
 	@echo "  test         - Run all tests"
 	@echo "  doctor       - Check build/runtime dependencies (no network, deterministic)"
 	@echo "  check-runtime- Check runtime binaries (waypipe required; sunshine/moonlight optional)"
+	@echo "  preflight    - Run local checks before pushing (best-effort; skips unavailable tools)"
+	@echo "  preflight-ci - Mirror CI checks locally (requires: json-c dev, python3; rust optional)"
+	@echo "  preflight-baseline - Baseline build+tests (WITH_RUST=0 WITH_JSONC=0)"
 	@echo "  core         - Build core C modules"
 	@echo "  input        - Build input prediction modules"
 	@echo "  compositor   - Build compositor integration"
@@ -188,6 +191,48 @@ check-runtime:
 	if [ $$missing -ne 0 ]; then exit 1; fi
 
 doctor: check-deps check-runtime
+
+# Local preflight (best-effort, deterministic, no network fetch)
+preflight: preflight-baseline preflight-ci preflight-format
+
+# Baseline contract check (this must always work)
+preflight-baseline:
+	@echo "== preflight-baseline: C-only baseline build+tests =="
+	@$(MAKE) clean >/dev/null
+	@$(MAKE) -j$$(nproc) WITH_RUST=0 WITH_JSONC=0 >/dev/null
+	@$(MAKE) WITH_JSONC=0 test >/dev/null
+	@echo "OK: baseline build+tests"
+
+# Mirror CI job logic locally (as close as possible)
+preflight-ci:
+	@echo "== preflight-ci: mirror GitHub Actions Build and Test =="
+	@$(MAKE) clean >/dev/null
+	@$(MAKE) -j$$(nproc) WITH_JSONC=1 core input compositor lenses >/dev/null
+	@$(MAKE) build/lib/liblunar_telescope.a >/dev/null
+	@$(MAKE) -C tests test WITH_JSONC=1 WITH_PYTHON=1 >/dev/null
+	@echo "OK: CI-equivalent build+tests"
+
+# Optional Rust checks (only if cargo exists)
+preflight-rust:
+	@echo "== preflight-rust: optional Rust island =="
+	@if command -v $(RUSTC) >/dev/null 2>&1; then \
+		$(MAKE) WITH_RUST=1 rust >/dev/null; \
+		(cd rust/input_predictor && cargo fmt -- --check >/dev/null 2>&1 || true); \
+		(cd rust/input_predictor && cargo clippy -- -D warnings >/dev/null 2>&1 || true); \
+		echo "OK: Rust preflight (best-effort)"; \
+	else \
+		echo "SKIP: cargo not found"; \
+	fi
+
+# Formatting checks (best-effort)
+preflight-format:
+	@echo "== preflight-format: best-effort formatting checks =="
+	@if command -v clang-format >/dev/null 2>&1; then \
+		find . -name '*.c' -o -name '*.h' | xargs clang-format --dry-run --Werror; \
+		echo "OK: clang-format"; \
+	else \
+		echo "SKIP: clang-format not found"; \
+	fi
 
 # Core modules
 core: $(CORE_OBJS)

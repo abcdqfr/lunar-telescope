@@ -1,16 +1,16 @@
 # Git hooks (optional)
 
-This repo includes **opt-in** hooks to reduce public CI failures.
+This repo includes hooks to reduce public CI failures.
 
 ## Enable hooks
 
 ```bash
-git config core.hooksPath .githooks
+make hooks-install
 ```
 
 ## Hooks included
 
-- `pre-push`: runs `make preflight` (deterministic, no network fetches)
+- `pre-push`: runs `make preflight-ci` (CI-equivalent checks, deterministic, no network fetches)
 
 ## Bypass
 

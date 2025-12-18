@@ -14,8 +14,8 @@ set -euo pipefail
 # To bypass for an emergency:
 #   git push --no-verify
 
-echo "[pre-push] Running Lunar Telescope preflight..."
-make preflight
+echo "[pre-push] Running Lunar Telescope CI-equivalent preflight..."
+make preflight-ci
 echo "[pre-push] OK"
 
 

@@ -71,10 +71,10 @@ This is how we avoid long-lived divergent branches while still serving constrain
   - Maintain `make check-runtime` as the canonical “doctor” for missing runtime components.
 
 - **Preflight before pushing**
-  - Run `make preflight` before pushing to avoid public CI churn.
-  - Optional: enable the pre-push hook:
-    - `git config core.hooksPath .githooks`
-    - This runs `make preflight` automatically (bypass with `git push --no-verify`).
+  - Policy: run CI-equivalent checks locally before pushing to avoid public CI churn.
+  - We enforce this via a **pre-push hook** that runs `make preflight-ci`.
+  - Hooks are auto-installed on the first `make` run (`make hooks-install`), unless `CI=true`.
+  - Emergency bypass remains available: `git push --no-verify` (use sparingly; expect CI failures to be visible).
 
 - **Lens metrics**
   - Decide whether Sunshine/Moonlight metrics should be:

@@ -7,7 +7,7 @@
 # - Lens adapters
 # - Tests
 
-.PHONY: all clean install uninstall test help core input compositor lenses check-deps check-deps-jsonc check-runtime doctor preflight preflight-ci preflight-baseline preflight-rust preflight-format
+.PHONY: all clean install uninstall test help core input compositor lenses check-deps check-deps-jsonc check-runtime doctor hooks-install hooks-uninstall preflight preflight-ci preflight-baseline preflight-rust preflight-format
 .DEFAULT_GOAL := all
 
 # Configuration
@@ -107,6 +107,8 @@ help:
 	@echo "  test         - Run all tests"
 	@echo "  doctor       - Check build/runtime dependencies (no network, deterministic)"
 	@echo "  check-runtime- Check runtime binaries (waypipe required; sunshine/moonlight optional)"
+	@echo "  hooks-install- Install git pre-push hook (runs CI-equivalent preflight before push)"
+	@echo "  hooks-uninstall- Remove git pre-push hook"
 	@echo "  preflight    - Run local checks before pushing (best-effort; skips unavailable tools)"
 	@echo "  preflight-ci - Mirror CI checks locally (requires: json-c dev, python3; rust optional)"
 	@echo "  preflight-baseline - Baseline build+tests (WITH_RUST=0 WITH_JSONC=0)"
@@ -234,6 +236,35 @@ preflight-format:
 		echo "SKIP: clang-format not found"; \
 	fi
 
+# Git hook installation (repo policy: always run local CI-equivalent checks before push)
+# NOTE: Git hooks cannot be enforced purely by repo contents for security reasons.
+# We therefore auto-install the hook during normal workflows, unless CI=true.
+hooks-install:
+	@if [ -n "$$CI" ]; then \
+		echo "SKIP: hooks-install in CI"; \
+		exit 0; \
+	fi
+	@if git rev-parse --git-dir >/dev/null 2>&1; then \
+		GITDIR=$$(git rev-parse --git-dir); \
+		HOOKSDIR="$$GITDIR/hooks"; \
+		mkdir -p "$$HOOKSDIR"; \
+		cp .githooks/pre-push "$$HOOKSDIR/pre-push"; \
+		chmod +x "$$HOOKSDIR/pre-push"; \
+		echo "Installed pre-push hook -> $$HOOKSDIR/pre-push"; \
+	else \
+		echo "SKIP: not a git repo (hooks-install)"; \
+	fi
+
+hooks-uninstall:
+	@if git rev-parse --git-dir >/dev/null 2>&1; then \
+		GITDIR=$$(git rev-parse --git-dir); \
+		HOOKSDIR="$$GITDIR/hooks"; \
+		rm -f "$$HOOKSDIR/pre-push"; \
+		echo "Removed $$HOOKSDIR/pre-push"; \
+	else \
+		echo "SKIP: not a git repo (hooks-uninstall)"; \
+	fi
+
 # Core modules
 core: $(CORE_OBJS)
 
@@ -315,7 +346,7 @@ ifeq ($(WITH_RUST),1)
 ALL_COMPONENTS := rust $(ALL_COMPONENTS)
 endif
 
-all: check-deps | $(BUILD_DIR)
+all: hooks-install check-deps | $(BUILD_DIR)
 all: $(ALL_COMPONENTS)
 	@echo ""
 	@echo "Build complete!"

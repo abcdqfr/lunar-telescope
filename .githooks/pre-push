@@ -15,8 +15,20 @@ set -euo pipefail
 # Git allows bypassing hooks. In this project, bypassing pre-push verification is a
 # violation of project policy. Enforce server-side with branch protection rules.
 
-echo "[pre-push] Running Lunar Telescope CI-equivalent preflight..."
-make preflight-ci
+echo "[pre-push] Running Lunar Telescope preflight (baseline always, CI-equivalent if available)..."
+
+# Baseline must always pass (no Rust/Python/json-c required).
+make preflight-baseline
+
+# CI-equivalent preflight is required for PR readiness, but can only be enforced
+# if the toolchain is present on the developer machine.
+if command -v python3 >/dev/null 2>&1 && command -v cargo >/dev/null 2>&1 && command -v pkg-config >/dev/null 2>&1; then
+  make preflight-ci
+else
+  echo "[pre-push] NOTE: skipping preflight-ci (missing python3/cargo/pkg-config)."
+  echo "[pre-push]       PR route will enforce CI server-side; install deps to catch failures earlier."
+fi
+
 echo "[pre-push] OK"
 
 

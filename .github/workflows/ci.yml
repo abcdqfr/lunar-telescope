@@ -28,28 +28,9 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
     
-    - name: Build Rust predictor
+    - name: Preflight (CI-equivalent)
       run: |
-        cd rust/input_predictor
-        cargo build --release
-    
-    - name: Build C modules
-      run: |
-        make -j$(nproc) core input compositor lenses
-    
-    - name: Build static library
-      run: |
-        make build/lib/liblunar_telescope.a
-    
-    - name: Run C tests
-      run: |
-        cd tests
-        make test
-    
-    - name: Run Python tests
-      run: |
-        python3 tests/test_profiles.py
-        python3 tests/test_schema_validation.py
+        make preflight-ci WITH_RUST=1 WITH_JSONC=1
     
     - name: Check code formatting (C)
       run: |

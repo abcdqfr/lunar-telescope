@@ -72,9 +72,17 @@ This is how we avoid long-lived divergent branches while still serving constrain
 
 - **Preflight before pushing**
   - Policy: run CI-equivalent checks locally before pushing to avoid public CI churn.
-  - We enforce this via a **pre-push hook** that runs `make preflight-ci`.
+  - PR route reality: we enforce baseline always, and CI-equivalent when the toolchain exists.
+  - The pre-push hook runs:
+    - `make preflight-baseline` (always)
+    - `make preflight-ci` (only if python3+cargo+pkg-config exist)
   - Hooks are auto-installed on the first `make` run (`make hooks-install`), unless `CI=true`.
   - **No-bypass policy**: bypassing verification is considered a violation of project policy. Enforce with GitHub branch protection (PRs + required checks).
+
+- **PR-only trunk**
+  - Protect `main` with GitHub branch protection:
+    - require PRs (no direct pushes)
+    - require status checks (Build and Test, Lint, Docs, Gitleaks)
 
 - **Lens metrics**
   - Decide whether Sunshine/Moonlight metrics should be:

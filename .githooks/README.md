@@ -21,10 +21,14 @@ To mirror the server-side CI job locally, you need:
 - `python3`
 - `cargo` (Rust toolchain)
 
-## Bypass
+## No-bypass policy
 
-```bash
-git push --no-verify
-```
+Git technically allows bypassing hooks. **This project does not.**
+
+Enforce this where it matters:
+- Protect `main` in GitHub settings:
+  - require PRs (no direct pushes)
+  - require status checks to pass
+  - restrict who can push
 
 

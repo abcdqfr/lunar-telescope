@@ -11,8 +11,9 @@ set -euo pipefail
 # Enable with:
 #   git config core.hooksPath .githooks
 #
-# To bypass for an emergency:
-#   git push --no-verify
+# Policy note:
+# Git allows bypassing hooks. In this project, bypassing pre-push verification is a
+# violation of project policy. Enforce server-side with branch protection rules.
 
 echo "[pre-push] Running Lunar Telescope CI-equivalent preflight..."
 make preflight-ci

@@ -113,6 +113,12 @@ We’ve **jumped the shark** when CI strictness stops buying correctness and sta
   - Add checks that either (a) prevent real production bugs, or (b) increase test signal.
   - Avoid checks that enforce taste without strong defect reduction.
 
+## IDE empowerment (clangd)
+
+- Generate `compile_commands.json` for accurate clangd diagnostics/completions:
+  - `nix develop -c make compdb`
+  - This captures both the library build and `tests/` build, and reflects the same flags we use in CI (gcc, WERROR, json-c enabled).
+
 - **PR-only trunk**
   - Protect `main` with GitHub branch protection:
     - require PRs (no direct pushes)

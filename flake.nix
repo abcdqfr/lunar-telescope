@@ -36,6 +36,7 @@
               gcovr
               clang
               clang-tools # clang-format/clang-tidy
+              bear
               cppcheck
               shellcheck
               shfmt

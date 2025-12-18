@@ -21,6 +21,7 @@ tests/test_integration
 # IDE files
 .vscode/
 .idea/
+compile_commands.json
 *.swp
 *.swo
 *~

@@ -7,7 +7,8 @@
 # - Lens adapters
 # - Tests
 
-.PHONY: all clean install uninstall test help core input compositor lenses check-deps check-deps-jsonc check-runtime doctor hooks-install hooks-uninstall preflight preflight-ci preflight-baseline preflight-rust preflight-format coverage coverage-report preflight-strict preflight-sanitize preflight-tsan preflight-tidy pr pr-create pr-open pr-status
+.PHONY: all clean install uninstall test help core input compositor lenses check-deps check-deps-jsonc check-runtime doctor hooks-install hooks-uninstall preflight preflight-ci preflight-baseline preflight-rust preflight-format coverage coverage-report preflight-strict preflight-sanitize preflight-tsan preflight-tidy compdb pr pr-create pr-open pr-status
+.PHONY: compdb
 .DEFAULT_GOAL := all
 
 # Configuration
@@ -135,6 +136,7 @@ help:
 	@echo "  hooks-install- Install git pre-push hook (runs CI-equivalent preflight before push)"
 	@echo "  hooks-uninstall- Remove git pre-push hook"
 	@echo "  pr           - Run baseline preflight, push current branch, and open a PR via gh"
+	@echo "  compdb       - Generate compile_commands.json for clangd (recommended: run in nix develop)"
 	@echo "  pr-open      - Open the current branch PR (if it exists) via gh"
 	@echo "  pr-status    - Show PR status for current branch via gh"
 	@echo "  preflight    - Run local checks before pushing (best-effort; skips unavailable tools)"
@@ -350,6 +352,28 @@ preflight-format:
 	else \
 		echo "SKIP: clang-format not found"; \
 	fi
+
+# Generate a compilation database for clangd/IDE.
+#
+# Produces: ./compile_commands.json
+# Recommended usage:
+#   nix develop -c make compdb
+#
+# Notes:
+# - Uses gcc (matches coverage + baseline/CI build compiler).
+# - Captures both library build and tests build.
+compdb:
+	@echo "== compdb: generate compile_commands.json (bear) =="
+	@if ! command -v bear >/dev/null 2>&1; then \
+		echo "Error: bear not found. Use nix develop or install bear."; \
+		exit 1; \
+	fi
+	@$(MAKE) clean >/dev/null
+	@bear --output compile_commands.json -- \
+		$(MAKE) -j$$(nproc) CC=gcc WITH_RUST=1 WITH_JSONC=1 WERROR=1 all >/dev/null
+	@bear --append --output compile_commands.json -- \
+		$(MAKE) -C tests all CC=gcc WITH_JSONC=1 WITH_PYTHON=0 WERROR=1 >/dev/null
+	@echo "OK: compile_commands.json generated"
 
 # Coverage (C): compile+run tests with coverage instrumentation and report via gcovr.
 #

@@ -210,6 +210,15 @@
         "options": { "cwd": "${workspaceFolder}" }
       },
       {
+        "label": "nix: compdb (compile_commands.json)",
+        "type": "shell",
+        "command": "nix",
+        "args": ["develop", "-c", "make", "compdb"],
+        "group": "build",
+        "problemMatcher": ["$gcc"],
+        "options": { "cwd": "${workspaceFolder}" }
+      },
+      {
         "label": "gh: create PR (self-PR flow)",
         "type": "shell",
         "command": "make",

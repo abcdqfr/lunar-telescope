@@ -30,6 +30,14 @@ nix develop
 make preflight-strict
 ```
 
+## IDE: clangd / compile_commands.json
+
+For best C diagnostics and navigation, generate a compilation database:
+
+```bash
+nix develop -c make compdb
+```
+
 ## Self-PR flow (GitHub CLI)
 
 This is the default workflow for maintainers too:

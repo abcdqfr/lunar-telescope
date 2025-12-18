@@ -239,18 +239,6 @@ That's the difference.
 ## License
 
 MIT (tentative) — compatible with Waypipe and wlroots.
-
----
-
-If you want, next logical steps would be:
-
-* `DESIGN-CONSTRAINTS.md` (why every limitation exists)
-* A **minimal C header** showing how prediction plugs into Waypipe
-* Or a brutally honest **Rust island justification doc** so it doesn't creep
-
-This README is the moment the project stops being "clever" and starts being *serious*.
-
-
-
+                                                                                                        
 
 

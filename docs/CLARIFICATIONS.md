@@ -20,9 +20,12 @@ This document clarifies potentially ambiguous aspects of the implementation.
 
 **Action:** The `reconciliation.c` file is redundant and can be removed. The Makefile currently compiles it, but the actual function is defined in `input_proxy.c`.
 
-## 2. Predictor Implementation (C-only)
+## 2. Predictor Implementation (hybrid: C baseline + optional Rust accelerator)
 
-Input prediction is implemented entirely in C (`input/input_proxy.c`), with a minimal, deterministic predictor suitable for short prediction windows.
+Input prediction is implemented in C (`input/input_proxy.c`) with an **optional** Rust accelerator.
+
+- **Baseline**: C predictor always works (no Rust toolchain required).
+- **Optional accelerator**: Rust predictor can be used when available (performance island), but must never block builds/tests.
 
 ## 4. Compositor Integration Status
 

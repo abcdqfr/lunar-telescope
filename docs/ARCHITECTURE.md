@@ -270,7 +270,7 @@ compositor_notify_frame_presented()
 - **Installation**: Libraries and headers to system paths
 
 ### Dependencies
-- **System**: waypipe, json-c, libwayland (for compositor)
+- **System**: waypipe (baseline), json-c (for JSON config parsing), libwayland (for compositor stubs)
 - **Build**: gcc/clang, pkg-config
 - **Optional**: wlroots (for full compositor integration)
 
@@ -291,9 +291,10 @@ compositor_notify_frame_presented()
 - Easy integration with upstream projects
 
 ### Why C-only?
-- Fewer toolchains and fewer moving parts
-- Deterministic builds and simpler packaging
-- Direct alignment with Wayland/wlroots/libinput ecosystems
+- **C-only baseline** is the portability contract, but the project is intentionally **hybrid**:
+  - Baseline always works without Rust/Python (widest reach, simplest packaging).
+  - Rust and Python remain **optional accelerators/tooling** that must never block baseline.
+  - This avoids long-lived divergent branches while keeping determinism.
 
 ### Why Glue Layer Only?
 - Maintains upstream compatibility

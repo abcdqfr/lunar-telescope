@@ -2,11 +2,18 @@
 
 CC = gcc
 FEATURE_MACROS = -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700
-CFLAGS = -Wall -Wextra -g -std=c11 $(FEATURE_MACROS)
-INCLUDES = -I../core -I../input
-
+DEFS :=
 WITH_JSONC ?= 1
 WITH_PYTHON ?= 1
+
+ifeq ($(WITH_JSONC),1)
+DEFS += -DLT_HAVE_JSONC=1
+else
+DEFS += -DLT_HAVE_JSONC=0
+endif
+
+CFLAGS = -Wall -Wextra -g -std=c11 $(FEATURE_MACROS) $(DEFS)
+INCLUDES = -I../core -I../input
 
 HAVE_PKG_CONFIG := $(shell command -v pkg-config >/dev/null 2>&1 && echo 1 || echo 0)
 HAVE_JSONC := $(shell pkg-config --exists json-c >/dev/null 2>&1 && echo 1 || echo 0)

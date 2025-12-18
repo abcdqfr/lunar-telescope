@@ -15,7 +15,7 @@ set -euo pipefail
 # Git allows bypassing hooks. In this project, bypassing pre-push verification is a
 # violation of project policy. Enforce server-side with branch protection rules.
 
-echo "[pre-push] Running Lunar Telescope preflight (baseline always, CI-equivalent if available)..."
+echo "[pre-push] Running Lunar Telescope preflight (baseline + strict)..."
 
 # Baseline must always pass (no Rust/Python/json-c required).
 make preflight-baseline

@@ -7,7 +7,7 @@
 # - Lens adapters
 # - Tests
 
-.PHONY: all clean install uninstall test help core input compositor lenses check-deps check-deps-jsonc check-runtime doctor hooks-install hooks-uninstall preflight preflight-ci preflight-baseline preflight-rust preflight-format
+.PHONY: all clean install uninstall test help core input compositor lenses check-deps check-deps-jsonc check-runtime doctor hooks-install hooks-uninstall preflight preflight-ci preflight-baseline preflight-rust preflight-format pr pr-create pr-open pr-status
 .DEFAULT_GOAL := all
 
 # Configuration
@@ -109,6 +109,9 @@ help:
 	@echo "  check-runtime- Check runtime binaries (waypipe required; sunshine/moonlight optional)"
 	@echo "  hooks-install- Install git pre-push hook (runs CI-equivalent preflight before push)"
 	@echo "  hooks-uninstall- Remove git pre-push hook"
+	@echo "  pr           - Run baseline preflight, push current branch, and open a PR via gh"
+	@echo "  pr-open      - Open the current branch PR (if it exists) via gh"
+	@echo "  pr-status    - Show PR status for current branch via gh"
 	@echo "  preflight    - Run local checks before pushing (best-effort; skips unavailable tools)"
 	@echo "  preflight-ci - Mirror CI checks locally (requires: json-c dev, python3; rust optional)"
 	@echo "  preflight-baseline - Baseline build+tests (WITH_RUST=0 WITH_JSONC=0)"
@@ -274,6 +277,41 @@ hooks-uninstall:
 	else \
 		echo "SKIP: not a git repo (hooks-uninstall)"; \
 	fi
+
+# GH-based self-PR flow (PR-first trunk)
+pr: pr-create
+
+pr-create:
+	@if ! command -v gh >/dev/null 2>&1; then \
+		echo "Error: gh (GitHub CLI) not found."; \
+		exit 1; \
+	fi
+	@if ! git rev-parse --git-dir >/dev/null 2>&1; then \
+		echo "Error: not a git repo."; \
+		exit 1; \
+	fi
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	if [ "$$branch" = "main" ]; then \
+		echo "Error: you're on main. Create a feature branch first (e.g., git switch -c feature/name)."; \
+		exit 1; \
+	fi; \
+	echo "== baseline preflight =="; \
+	$(MAKE) preflight-baseline; \
+	echo "== push branch $$branch =="; \
+	git push -u origin HEAD; \
+	echo "== create PR (base=main) =="; \
+	gh pr create --fill --base main || { \
+		echo "NOTE: PR may already exist. Try: make pr-open"; \
+		exit 1; \
+	}
+
+pr-open:
+	@if ! command -v gh >/dev/null 2>&1; then echo "Error: gh not found."; exit 1; fi
+	@gh pr view --web || { echo "No PR found for current branch."; exit 1; }
+
+pr-status:
+	@if ! command -v gh >/dev/null 2>&1; then echo "Error: gh not found."; exit 1; fi
+	@gh pr status
 
 # Core modules
 core: $(CORE_OBJS)
